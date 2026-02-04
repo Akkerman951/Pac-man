@@ -258,6 +258,11 @@ class PacmanGame(arcade.View):
                     self.player.center_x = tp.center_x
                     self.player.center_y = tp.center_y
                 break
+        apples_hit = arcade.check_for_collision_with_list(self.player, self.apple_list)
+
+        for apple in apples_hit:
+            self.player.score += apple.value
+            apple.remove_from_sprite_lists()
 
         if self.player.score >= self.max_score:
             self.win = True
