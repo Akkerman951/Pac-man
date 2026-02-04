@@ -152,6 +152,10 @@ class PacmanGame(arcade.View):
                     ghost.center_x = x
                     ghost.center_y = y
                     self.ghost_list.append(ghost)
+                    apple = Apple()
+                    apple.center_x = x
+                    apple.center_y = y
+                    self.apple_list.append(apple)
 
                 elif cell == "T":
                     teleport = Teleport()
@@ -166,6 +170,12 @@ class PacmanGame(arcade.View):
                     self.start_x = x
                     self.start_y = y
                     self.player_list.append(self.player)
+
+                elif cell == "A":
+                    apple = Apple()
+                    apple.center_x = x
+                    apple.center_y = y
+                    self.apple_list.append(apple)
 
         self.max_score = len(self.coin_list) * 300
 
@@ -251,6 +261,7 @@ class PacmanGame(arcade.View):
 
         if self.player.score >= self.max_score:
             self.win = True
+
 
 # ------------------ MAIN ------------------
 def main():
