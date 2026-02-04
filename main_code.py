@@ -225,7 +225,13 @@ class PacmanGame(arcade.View):
         for coin in coins_hit:
             self.player.score += coin.value
             coin.remove_from_sprite_lists()
-
+        tp_hits = arcade.check_for_collision_with_list(self.player, self.teleport_list)
+        if tp_hits:
+            for tp in self.teleport_list:
+                if tp not in tp_hits:
+                    self.player.center_x = tp.center_x
+                    self.player.center_y = tp.center_y
+                break
 
         if self.player.score >= self.max_score:
             self.win = True
