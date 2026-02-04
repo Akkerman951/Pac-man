@@ -1,7 +1,7 @@
 import random
 import arcade
 from arcade import check_for_collision_with_list
-
+# test
 # ------------------ CONSTANTS ------------------
 def load_config(filename):
     config = {}
