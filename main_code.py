@@ -97,6 +97,7 @@ class PacmanGame(arcade.View):
         self.coin_list = arcade.SpriteList()
         self.ghost_list = arcade.SpriteList()
         self.player_list = arcade.SpriteList()
+        self.teleport_list = arcade.SpriteList()
 
         self.player = None
         self.game_over = False
@@ -114,6 +115,7 @@ class PacmanGame(arcade.View):
         self.ghost_list = arcade.SpriteList()
         self.coin_list = arcade.SpriteList()
         self.player_list = arcade.SpriteList()
+        self.teleport_list = arcade.SpriteList()
 
         self.game_over = False
         self.win = False
@@ -143,6 +145,12 @@ class PacmanGame(arcade.View):
                     ghost.center_x = x
                     ghost.center_y = y
                     self.ghost_list.append(ghost)
+
+                elif cell == "T":
+                    teleport = Teleport()
+                    teleport.center_x = x
+                    teleport.center_y = y
+                    self.teleport_list.append(teleport)
 
                 elif cell == "P":
                     self.player = Pacman()
