@@ -2,3 +2,7 @@ WINDOW_WIDTH=800
 WINDOW_HEIGHT=600
 TILE_SIZE=32
 WINDOW_TITLE=pacman
+coin_sound1= music1/music_level1/coin_sound.mpeg
+apple_sound1= music1/music_level1/apple_sound.mpeg
+portal_sound1= music1/music_level1/portal_saund.mpeg
+ghost_sound1= music1/music_level1/ghost_sound.mpeg
