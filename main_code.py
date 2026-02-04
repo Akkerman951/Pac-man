@@ -1,6 +1,9 @@
 import random
 import arcade
-from arcade import check_for_collision_with_list
+from PIL.ImageOps import contain
+from arcade import check_for_collision_with_list, load_sound, play_sound
+
+
 # test
 # ------------------ CONSTANTS ------------------
 def load_config(filename):
@@ -24,6 +27,14 @@ WINDOW_WIDTH = config["WINDOW_WIDTH"]
 WINDOW_HEIGHT = config["WINDOW_HEIGHT"]
 TILE_SIZE = config["TILE_SIZE"]
 WINDOW_TITLE = config["WINDOW_TITLE"]
+
+COIN_SOUND = load_sound(config["coin_sound1"])
+APPLE_SOUND = load_sound(config["apple_sound1"])
+PORTAL_SOUND = load_sound(config["portal_sound1"])
+GHOST_SOUND = load_sound(config["ghost_sound1"])
+
+
+
 
 
 def load_level_map(filename):
@@ -88,6 +99,7 @@ class Coin(arcade.Sprite):
         texture = arcade.make_circle_texture(16, arcade.color.YELLOW)
         super().__init__(texture)
         self.value = 300
+
 
 class Wall(arcade.Sprite):
     def __init__(self):
@@ -191,10 +203,11 @@ class PacmanGame(arcade.View):
         self.clear()
         self.wall_list.draw()
         self.coin_list.draw()
-        self.ghost_list.draw()
         self.apple_list.draw()
-        self.player_list.draw()
+        self.ghost_list.draw()
         self.teleport_list.draw()
+        self.player_list.draw()
+
 
         arcade.draw_text(f"Score: {self.player.score}", 10, WINDOW_HEIGHT - 30, arcade.color.WHITE, 16)
         arcade.draw_text(f"Lives: {self.lives}", 10, WINDOW_HEIGHT - 55, arcade.color.WHITE, 16)
@@ -226,6 +239,7 @@ class PacmanGame(arcade.View):
         ghosts_hit = check_for_collision_with_list(self.player, self.ghost_list)
         if ghosts_hit:
             self.lives -= 1
+            arcade.play_sound(GHOST_SOUND,20)
             if self.lives <= 0:
                 self.game_over = True
             else:
@@ -260,18 +274,23 @@ class PacmanGame(arcade.View):
         for coin in coins_hit:
             self.player.score += coin.value
             coin.remove_from_sprite_lists()
+            arcade.play_sound(COIN_SOUND)
+
+
         tp_hits = arcade.check_for_collision_with_list(self.player, self.teleport_list)
         if tp_hits:
             for tp in self.teleport_list:
                 if tp not in tp_hits:
                     self.player.center_x = tp.center_x
                     self.player.center_y = tp.center_y
+                    arcade.play_sound(PORTAL_SOUND)
                 break
-        apples_hit = arcade.check_for_collision_with_list(self.player, self.apple_list)
 
+        apples_hit = arcade.check_for_collision_with_list(self.player, self.apple_list)
         for apple in apples_hit:
             self.player.score += apple.value
             apple.remove_from_sprite_lists()
+            play_sound(APPLE_SOUND)
 
         if self.player.score >= self.max_score:
             self.win = True
