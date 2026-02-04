@@ -60,6 +60,13 @@ class Pacman(arcade.Sprite):
         self.change_x = 0
         self.change_y = 0
 
+class Teleport(arcade.Sprite):
+    def __init__(self):
+        texture = arcade.make_soft_square_texture(TILE_SIZE, arcade.color.RED, 255, 255)
+        super().__init__(texture)
+        self.width = TILE_SIZE
+        self.height = TILE_SIZE
+
 class Ghost(arcade.Sprite):
     def __init__(self):
         texture = arcade.make_circle_texture(TILE_SIZE, arcade.color.RED)
@@ -168,6 +175,7 @@ class PacmanGame(arcade.View):
         self.coin_list.draw()
         self.ghost_list.draw()
         self.player_list.draw()
+        self.teleport_list.draw()
 
         arcade.draw_text(f"Score: {self.player.score}", 10, WINDOW_HEIGHT - 30, arcade.color.WHITE, 16)
         arcade.draw_text(f"Lives: {self.lives}", 10, WINDOW_HEIGHT - 55, arcade.color.WHITE, 16)
