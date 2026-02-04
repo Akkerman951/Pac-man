@@ -1,6 +1,6 @@
 import random
 import arcade
-from arcade import check_for_collision_with_list, load_sound, play_sound
+from arcade import check_for_collision_with_list, load_sound, play_sound, load_texture
 
 
 # test
@@ -33,6 +33,9 @@ PORTAL_SOUND = load_sound(config["portal_sound1"])
 GHOST_SOUND = load_sound(config["ghost_sound1"])
 WIN_SOUND = load_sound(config["win_sound1"])
 EAT_GHOST_SOUND = load_sound(config["eat_ghost_sound1"])
+
+PINK_GHOST_PNG_R = load_texture(config["pink_ghost_png1.r"])
+PORTAL_PNG1 = load_texture(config["portal_png1"])
 
 
 
@@ -74,14 +77,14 @@ class Pacman(arcade.Sprite):
 
 class Teleport(arcade.Sprite):
     def __init__(self):
-        texture = arcade.make_soft_square_texture(TILE_SIZE, arcade.color.RED, 255, 255)
+        texture = PORTAL_PNG1
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
 
 class Ghost(arcade.Sprite):
     def __init__(self):
-        texture = arcade.make_circle_texture(TILE_SIZE, arcade.color.RED)
+        texture = PINK_GHOST_PNG_R
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
@@ -227,18 +230,21 @@ class PacmanGame(arcade.View):
         elif self.win:
             arcade.draw_text("YOU WIN!", WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2, arcade.color.PINK, 32)
 
-
     def on_key_press(self, key: int, modifiers):
-        if key == arcade.key.UP:
+        # Вверх: стрелка или W
+        if key == arcade.key.UP or key == arcade.key.W:
             self.player.change_x = 0
             self.player.change_y = self.player.speed
-        elif key == arcade.key.DOWN:
+
+        elif key == arcade.key.DOWN or key == arcade.key.S:
             self.player.change_x = 0
             self.player.change_y = -self.player.speed
-        elif key == arcade.key.RIGHT:
+
+        elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.player.change_x = self.player.speed
             self.player.change_y = 0
-        elif key == arcade.key.LEFT:
+
+        elif key == arcade.key.LEFT or key == arcade.key.A:
             self.player.change_x = -self.player.speed
             self.player.change_y = 0
 

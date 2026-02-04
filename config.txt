@@ -8,3 +8,5 @@ portal_sound1= music1/music_level1/portal_sound.mpeg
 ghost_sound1= music1/music_level1/ghost_sound.mpeg
 win_sound1= music1/music_level1/win_sound.mpeg
 eat_ghost_sound1= music1/music_level1/eat_ghost_sound.mpeg
+pink_ghost_png1.r= texture/texture1/Ghost_pinc_png.png
+portal_png1= texture/texture1/portal_png.png
