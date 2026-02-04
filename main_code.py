@@ -96,6 +96,13 @@ class Wall(arcade.Sprite):
         self.width = TILE_SIZE
         self.height = TILE_SIZE
 
+class Apple(arcade.Sprite):
+    def __init__(self):
+        super().__init__("apple1.jpg", scale=0.2)
+        self.width = TILE_SIZE
+        self.height = TILE_SIZE
+        self.value = 500
+
 # ------------------ GAME ------------------
 class PacmanGame(arcade.View):
     def __init__(self):
@@ -123,6 +130,7 @@ class PacmanGame(arcade.View):
         self.coin_list = arcade.SpriteList()
         self.player_list = arcade.SpriteList()
         self.teleport_list = arcade.SpriteList()
+        self.apple_list = arcade.SpriteList()
 
         self.game_over = False
         self.win = False
@@ -152,6 +160,10 @@ class PacmanGame(arcade.View):
                     ghost.center_x = x
                     ghost.center_y = y
                     self.ghost_list.append(ghost)
+                    apple = Apple()
+                    apple.center_x = x
+                    apple.center_y = y
+                    self.apple_list.append(apple)
 
                 elif cell == "T":
                     teleport = Teleport()
@@ -167,6 +179,12 @@ class PacmanGame(arcade.View):
                     self.start_y = y
                     self.player_list.append(self.player)
 
+                elif cell == "A":
+                    apple = Apple()
+                    apple.center_x = x
+                    apple.center_y = y
+                    self.apple_list.append(apple)
+
         self.max_score = len(self.coin_list) * 300
 
     def on_draw(self):
@@ -174,6 +192,7 @@ class PacmanGame(arcade.View):
         self.wall_list.draw()
         self.coin_list.draw()
         self.ghost_list.draw()
+        self.apple_list.draw()
         self.player_list.draw()
         self.teleport_list.draw()
 
@@ -248,9 +267,15 @@ class PacmanGame(arcade.View):
                     self.player.center_x = tp.center_x
                     self.player.center_y = tp.center_y
                 break
+        apples_hit = arcade.check_for_collision_with_list(self.player, self.apple_list)
+
+        for apple in apples_hit:
+            self.player.score += apple.value
+            apple.remove_from_sprite_lists()
 
         if self.player.score >= self.max_score:
             self.win = True
+
 
 # ------------------ MAIN ------------------
 def main():
