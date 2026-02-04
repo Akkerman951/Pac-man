@@ -130,6 +130,7 @@ class PacmanGame(arcade.View):
         self.coin_list = arcade.SpriteList()
         self.player_list = arcade.SpriteList()
         self.teleport_list = arcade.SpriteList()
+        self.apple_list = arcade.SpriteList()
 
         self.game_over = False
         self.win = False
@@ -191,6 +192,7 @@ class PacmanGame(arcade.View):
         self.wall_list.draw()
         self.coin_list.draw()
         self.ghost_list.draw()
+        self.apple_list.draw()
         self.player_list.draw()
         self.teleport_list.draw()
 
