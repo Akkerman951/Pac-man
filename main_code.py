@@ -1,6 +1,5 @@
 import random
 import arcade
-from PIL.ImageOps import contain
 from arcade import check_for_collision_with_list, load_sound, play_sound
 
 
@@ -58,7 +57,7 @@ class Pacman(arcade.Sprite):
         self.change_x = 0
         self.change_y = 0
         self.score = 0
-        self.speed = 3
+        self.speed = 1.3
 
     def move(self):
         self.center_x += self.change_x
@@ -128,6 +127,8 @@ class PacmanGame(arcade.View):
         self.player = None
         self.game_over = False
         self.win = False
+        self.power_mode = False
+        self.power_timer = 0
 
         self.start_x = 0
         self.start_y = 0
@@ -147,6 +148,8 @@ class PacmanGame(arcade.View):
         self.game_over = False
         self.win = False
         self.window.background_color = arcade.color.BLACK
+        self.power_mode = False
+        self.power_timer = 0
 
         rows = len(LEVEL_MAP)
 
@@ -168,10 +171,11 @@ class PacmanGame(arcade.View):
                     self.coin_list.append(coin)
 
                 elif cell == "G":
-                    ghost = Ghost()
-                    ghost.center_x = x
-                    ghost.center_y = y
-                    self.ghost_list.append(ghost)
+                    for i in range(4):
+                        ghost = Ghost()
+                        ghost.center_x = x
+                        ghost.center_y = y
+                        self.ghost_list.append(ghost)
                     apple = Apple()
                     apple.center_x = x
                     apple.center_y = y
@@ -197,7 +201,8 @@ class PacmanGame(arcade.View):
                     apple.center_y = y
                     self.apple_list.append(apple)
 
-        self.max_score = len(self.coin_list) * 300
+        self.max_score = len(self.coin_list) * 300 + len(self.apple_list) * 500 + 4 * 1000
+
 
     def on_draw(self):
         self.clear()
@@ -235,20 +240,23 @@ class PacmanGame(arcade.View):
         if self.game_over or self.win:
             return
 
+        self.player.move()
 
-        ghosts_hit = check_for_collision_with_list(self.player, self.ghost_list)
+        ghosts_hit = arcade.check_for_collision_with_list(self.player, self.ghost_list)
         if ghosts_hit:
-            self.lives -= 1
-            arcade.play_sound(GHOST_SOUND,20)
-            if self.lives <= 0:
-                self.game_over = True
+            if self.power_mode:
+                for ghost in ghosts_hit:
+                    ghost.remove_from_sprite_lists()
+                    self.player.score += 1000
             else:
-
-                self.player.center_x = self.start_x
-                self.player.center_y = self.start_y
-                self.player.change_x = 0
-                self.player.change_y = 0
-
+                self.lives -= 1
+                if self.lives <= 0:
+                    self.game_over = True
+                else:
+                    self.player.center_x = self.start_x
+                    self.player.center_y = self.start_y
+                    self.player.change_x = 0
+                    self.player.change_y = 0
 
         self.player.move()
         mat_x = self.player.center_x // TILE_SIZE
@@ -287,10 +295,19 @@ class PacmanGame(arcade.View):
                 break
 
         apples_hit = arcade.check_for_collision_with_list(self.player, self.apple_list)
+        if apples_hit:
+            self.power_mode = True
+            self.power_timer = 10 * 60
+            play_sound(APPLE_SOUND)
+
+        if self.power_mode:
+            self.power_timer -= 1
+            if self.power_timer <= 0:
+                self.power_mode = False
+
         for apple in apples_hit:
             self.player.score += apple.value
             apple.remove_from_sprite_lists()
-            play_sound(APPLE_SOUND)
 
         if self.player.score >= self.max_score:
             self.win = True
