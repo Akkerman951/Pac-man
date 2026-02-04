@@ -57,7 +57,7 @@ class Pacman(arcade.Sprite):
         self.change_x = 0
         self.change_y = 0
         self.score = 0
-        self.speed = 1.3
+        self.speed = 2.4
 
     def move(self):
         self.center_x += self.change_x
@@ -95,10 +95,14 @@ class Ghost(arcade.Sprite):
 
 class Coin(arcade.Sprite):
     def __init__(self):
-        texture = arcade.make_circle_texture(16, arcade.color.YELLOW)
-        super().__init__(texture)
+        self.normal_texture = arcade.make_circle_texture(16, arcade.color.YELLOW)
+        self.power_texture = arcade.make_circle_texture(16, arcade.color.PINK)
+
+        super().__init__(self.normal_texture)
         self.value = 300
 
+    def set_power(self, power: bool):
+        self.texture = self.power_texture if power else self.normal_texture
 
 class Wall(arcade.Sprite):
     def __init__(self):
@@ -213,7 +217,6 @@ class PacmanGame(arcade.View):
         self.teleport_list.draw()
         self.player_list.draw()
 
-
         arcade.draw_text(f"Score: {self.player.score}", 10, WINDOW_HEIGHT - 30, arcade.color.WHITE, 16)
         arcade.draw_text(f"Lives: {self.lives}", 10, WINDOW_HEIGHT - 55, arcade.color.WHITE, 16)
 
@@ -241,7 +244,6 @@ class PacmanGame(arcade.View):
             return
 
         self.player.move()
-
         ghosts_hit = arcade.check_for_collision_with_list(self.player, self.ghost_list)
         if ghosts_hit:
             if self.power_mode:
@@ -258,7 +260,6 @@ class PacmanGame(arcade.View):
                     self.player.change_x = 0
                     self.player.change_y = 0
 
-        self.player.move()
         mat_x = self.player.center_x // TILE_SIZE
         mat_y = self.player.center_y // TILE_SIZE
         if arcade.check_for_collision_with_list(self.player, self.wall_list):
@@ -284,6 +285,20 @@ class PacmanGame(arcade.View):
             coin.remove_from_sprite_lists()
             arcade.play_sound(COIN_SOUND)
 
+        for coin in self.coin_list:
+            coin.set_power(self.power_mode)
+
+        if self.power_mode:
+            if self.power_timer < 120:
+                blink = (self.power_timer // 10) % 2 == 0
+                for coin in self.coin_list:
+                    coin.set_power(blink)
+            else:
+                for coin in self.coin_list:
+                    coin.set_power(True)
+        else:
+            for coin in self.coin_list:
+                coin.set_power(False)
 
         tp_hits = arcade.check_for_collision_with_list(self.player, self.teleport_list)
         if tp_hits:
