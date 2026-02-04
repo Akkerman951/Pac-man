@@ -96,6 +96,13 @@ class Wall(arcade.Sprite):
         self.width = TILE_SIZE
         self.height = TILE_SIZE
 
+class Apple(arcade.Sprite):
+    def __init__(self):
+        super().__init__("apple1.jpg", scale=0.2)
+        self.width = TILE_SIZE
+        self.height = TILE_SIZE
+        self.value = 500
+
 # ------------------ GAME ------------------
 class PacmanGame(arcade.View):
     def __init__(self):
