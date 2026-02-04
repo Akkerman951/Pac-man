@@ -31,6 +31,8 @@ COIN_SOUND = load_sound(config["coin_sound1"])
 APPLE_SOUND = load_sound(config["apple_sound1"])
 PORTAL_SOUND = load_sound(config["portal_sound1"])
 GHOST_SOUND = load_sound(config["ghost_sound1"])
+WIN_SOUND = load_sound(config["win_sound1"])
+EAT_GHOST_SOUND = load_sound(config["eat_ghost_sound1"])
 
 
 
@@ -225,6 +227,7 @@ class PacmanGame(arcade.View):
         elif self.win:
             arcade.draw_text("YOU WIN!", WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2, arcade.color.PINK, 32)
 
+
     def on_key_press(self, key: int, modifiers):
         if key == arcade.key.UP:
             self.player.change_x = 0
@@ -249,9 +252,11 @@ class PacmanGame(arcade.View):
             if self.power_mode:
                 for ghost in ghosts_hit:
                     ghost.remove_from_sprite_lists()
+                    play_sound(EAT_GHOST_SOUND,10)
                     self.player.score += 1000
             else:
                 self.lives -= 1
+                play_sound(GHOST_SOUND,20)
                 if self.lives <= 0:
                     self.game_over = True
                 else:
@@ -306,7 +311,7 @@ class PacmanGame(arcade.View):
                 if tp not in tp_hits:
                     self.player.center_x = tp.center_x
                     self.player.center_y = tp.center_y
-                    arcade.play_sound(PORTAL_SOUND)
+                    arcade.play_sound(PORTAL_SOUND,10)
                 break
 
         apples_hit = arcade.check_for_collision_with_list(self.player, self.apple_list)
@@ -325,6 +330,7 @@ class PacmanGame(arcade.View):
             apple.remove_from_sprite_lists()
 
         if self.player.score >= self.max_score:
+            arcade.play_sound(WIN_SOUND,20)
             self.win = True
 
 
