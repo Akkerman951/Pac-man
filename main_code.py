@@ -62,6 +62,7 @@ class SplashScreen(arcade.View):
         self.alpha = -100
         self.fade_speed = 0.5
         self.max_time = 12 * 60  # 5 секунд
+        #put sound of starting screen here!!!
 
         # создаём спрайт на весь экран
         self.background_sprite = arcade.Sprite()
