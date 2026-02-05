@@ -93,6 +93,15 @@ class SplashScreen(arcade.View):
             game.setup()
             self.window.show_view(game)
 
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.SPACE:  # проверяем клавишу
+            self.start_game()
+
+    def start_game(self):
+        game = PacmanGame()
+        game.setup()
+        self.window.show_view(game)
+
 
 
 # ------------------ SPRITES ------------------
