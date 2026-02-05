@@ -34,10 +34,12 @@ PORTAL_SOUND = load_sound(config["portal_sound1"])
 GHOST_SOUND = load_sound(config["ghost_sound1"])
 WIN_SOUND = load_sound(config["win_sound1"])
 EAT_GHOST_SOUND = load_sound(config["eat_ghost_sound1"])
+PILL_SOUND = load_sound(config["pill_sound1"])
 
 RED_GHOST_PNG_R = load_texture(config["red_ghost_png1.r"])
 PORTAL_PNG1 = load_texture(config["portal_png1"])
 APPLE_PNG = load_texture(config["apple_png1"])
+PILL_PNG =  load_texture(config["pill_blue_png1"])
 
 
 
@@ -73,7 +75,6 @@ class Pacman(arcade.Sprite):
     def move(self):
         self.center_x += self.change_x
         self.center_y += self.change_y
-
     def update(self, *args):
         self.move()
 
@@ -132,7 +133,7 @@ class Apple(arcade.Sprite):
 
 class Pill(arcade.Sprite):
     def __init__(self):
-        texture = arcade.make_circle_texture(20, arcade.color.RED)#put png of pill here!!!!!
+        texture = PILL_PNG
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
@@ -290,7 +291,7 @@ class PacmanGame(arcade.View):
             self.player.speed = self.player.speed_basic + self.player.speed_grader
             for pill in pill_hit:
                 pill.remove_from_sprite_lists()
-                # put sound of pill collect here!!!!!!!
+                arcade.play_sound(PILL_SOUND)
 
         if self.speed_up:
             self.speed_up_timer -= 1
@@ -390,7 +391,7 @@ class PacmanGame(arcade.View):
             apple.remove_from_sprite_lists()
 
         if self.player.score >= self.max_score:
-            arcade.play_sound(WIN_SOUND,200)
+            arcade.play_sound(WIN_SOUND,20)
             self.win = True
 
 
