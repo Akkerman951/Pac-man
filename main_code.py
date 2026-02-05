@@ -64,7 +64,9 @@ class Pacman(arcade.Sprite):
         self.change_x = 0
         self.change_y = 0
         self.score = 0
-        self.speed = 2.4
+        self.speed_basic = 2.4
+        self.speed_grader = 1
+        self.speed = self.speed_basic
 
     def move(self):
         self.center_x += self.change_x
@@ -126,6 +128,13 @@ class Apple(arcade.Sprite):
         self.height = TILE_SIZE
         self.value = 500
 
+class Pill(arcade.Sprite):
+    def __init__(self):
+        texture = arcade.make_circle_texture(20, arcade.color.RED)#put png of pill here!!!!!
+        super().__init__(texture)
+        self.width = TILE_SIZE
+        self.height = TILE_SIZE
+
 # ------------------ GAME ------------------
 class PacmanGame(arcade.View):
     def __init__(self):
@@ -135,12 +144,15 @@ class PacmanGame(arcade.View):
         self.ghost_list = arcade.SpriteList()
         self.player_list = arcade.SpriteList()
         self.teleport_list = arcade.SpriteList()
+        self.pill_list = arcade.SpriteList()
 
         self.player = None
         self.game_over = False
         self.win = False
         self.power_mode = False
         self.power_timer = 0
+        self.speed_up = False
+        self.speed_up_timer = 0
 
         self.start_x = 0
         self.start_y = 0
@@ -156,12 +168,15 @@ class PacmanGame(arcade.View):
         self.player_list = arcade.SpriteList()
         self.teleport_list = arcade.SpriteList()
         self.apple_list = arcade.SpriteList()
+        self.pill_list = arcade.SpriteList()
 
         self.game_over = False
         self.win = False
         self.window.background_color = arcade.color.BLACK
         self.power_mode = False
         self.power_timer = 0
+        self.speed_up = False
+        self.speed_up_timer = 0
 
         rows = len(LEVEL_MAP)
 
@@ -213,17 +228,23 @@ class PacmanGame(arcade.View):
                     apple.center_y = y
                     self.apple_list.append(apple)
 
-        self.max_score = len(self.coin_list) * 300 + len(self.apple_list) * 500 + 4 * 1000
+                elif cell == "D":
+                    pill = Pill()
+                    pill.center_x = x
+                    pill.center_y = y
+                    self.pill_list.append(pill)
 
+        self.max_score = len(self.coin_list) * 300 + len(self.apple_list) * 500 + 4 * 1000
 
     def on_draw(self):
         self.clear()
         self.wall_list.draw()
         self.coin_list.draw()
         self.apple_list.draw()
-        self.ghost_list.draw()
         self.teleport_list.draw()
+        self.ghost_list.draw()
         self.player_list.draw()
+        self.pill_list.draw()
 
         arcade.draw_text(f"Score: {self.player.score}", 10, WINDOW_HEIGHT - 30, arcade.color.WHITE, 16)
         arcade.draw_text(f"Lives: {self.lives}", 10, WINDOW_HEIGHT - 55, arcade.color.WHITE, 16)
@@ -234,7 +255,7 @@ class PacmanGame(arcade.View):
             arcade.draw_text("YOU WIN!", WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2, arcade.color.PINK, 32)
 
     def on_key_press(self, key: int, modifiers):
-        # Вверх: стрелка или W
+
         if key == arcade.key.UP or key == arcade.key.W:
             self.player.change_x = 0
             self.player.change_y = self.player.speed
@@ -256,7 +277,24 @@ class PacmanGame(arcade.View):
             return
 
         self.player.move()
+
+        pill_hit = arcade.check_for_collision_with_list(self.player, self.pill_list)
+        if pill_hit:
+            self.speed_up_timer = 5 * 60
+            self.speed_up = True
+            self.player.speed = self.player.speed_basic + self.player.speed_grader
+            for pill in pill_hit:
+                pill.remove_from_sprite_lists()
+                # put sound of pill collect here!!!!!!!
+
+        if self.speed_up:
+            self.speed_up_timer -= 1
+            if self.speed_up_timer <= 0:
+                self.speed_up = False
+                self.player.speed = self.player.speed_basic
+
         ghosts_hit = arcade.check_for_collision_with_list(self.player, self.ghost_list)
+
         if ghosts_hit:
             if self.power_mode:
                 for ghost in ghosts_hit:
@@ -268,6 +306,7 @@ class PacmanGame(arcade.View):
                 play_sound(GHOST_SOUND,20)
                 if self.lives <= 0:
                     self.game_over = True
+                    #put sound of lose here!!!
                 else:
                     self.player.center_x = self.start_x
                     self.player.center_y = self.start_y
@@ -304,6 +343,7 @@ class PacmanGame(arcade.View):
 
         if self.power_mode:
             if self.power_timer < 120:
+                #put sound of 2 remaining seconds of power mode here!!!!!
                 blink = (self.power_timer // 10) % 2 == 0
                 for coin in self.coin_list:
                     coin.set_power(blink)
