@@ -35,12 +35,11 @@ GHOST_SOUND = load_sound(config["ghost_sound1"])
 WIN_SOUND = load_sound(config["win_sound1"])
 EAT_GHOST_SOUND = load_sound(config["eat_ghost_sound1"])
 PILL_SOUND = load_sound(config["pill_sound1"])
-
 RED_GHOST_PNG_R = load_texture(config["red_ghost_png1.r"])
 PORTAL_PNG1 = load_texture(config["portal_png1"])
 APPLE_PNG = load_texture(config["apple_png1"])
 PILL_PNG =  load_texture(config["pill_blue_png1"])
-
+SPLASH_PNG = load_texture("texture/starting_screen.jpg")
 
 
 
@@ -54,6 +53,45 @@ def load_level_map(filename):
 
 
 LEVEL_MAP = load_level_map("level1.txt")
+
+#--------------------starting screen-----------
+class SplashScreen(arcade.View):
+    def __init__(self):
+        super().__init__()
+        self.timer = 0
+        self.alpha = -100
+        self.fade_speed = 0.5
+        self.max_time = 12 * 60  # 5 секунд
+
+        # создаём спрайт на весь экран
+        self.background_sprite = arcade.Sprite()
+        self.background_sprite.texture = SPLASH_PNG
+        self.background_sprite.center_x = WINDOW_WIDTH / 2
+        self.background_sprite.center_y = WINDOW_HEIGHT / 2
+        self.background_sprite.width = WINDOW_WIDTH
+        self.background_sprite.height = WINDOW_HEIGHT
+
+        # добавляем спрайт в список
+        self.background_list = arcade.SpriteList()
+        self.background_list.append(self.background_sprite)
+
+    def on_draw(self):
+        self.clear()
+        # рисуем через SpriteList
+        self.background_list.draw()
+
+    def on_update(self, delta_time):
+        self.timer += 1
+        # плавное появление
+        if self.alpha < 255:
+            self.alpha = min(255, self.alpha + self.fade_speed)
+            self.background_sprite.alpha = self.alpha
+        # после таймера запускаем игру
+        if self.timer >= self.max_time:
+            game = PacmanGame()
+            game.setup()
+            self.window.show_view(game)
+
 
 
 # ------------------ SPRITES ------------------
@@ -391,16 +429,14 @@ class PacmanGame(arcade.View):
             apple.remove_from_sprite_lists()
 
         if self.player.score >= self.max_score:
-            arcade.play_sound(WIN_SOUND,20)
+            arcade.play_sound(WIN_SOUND,200)
             self.win = True
 
 
 # ------------------ MAIN ------------------
 def main():
-    window = arcade.Window(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
-    game = PacmanGame()
-    game.setup()
-    window.show_view(game)
+    window = arcade.Window(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_TITLE)
+    window.show_view(SplashScreen())
     arcade.run()
 
 if __name__ == "__main__":
