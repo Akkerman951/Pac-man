@@ -67,6 +67,8 @@ class Pacman(arcade.Sprite):
         self.speed_basic = 2.4
         self.speed_grader = 1
         self.speed = self.speed_basic
+        # Добавлено: короткая защита от моментального обратного телепорта
+        self.teleport_cooldown = 0
 
     def move(self):
         self.center_x += self.change_x
@@ -276,6 +278,9 @@ class PacmanGame(arcade.View):
         if self.game_over or self.win:
             return
 
+        if self.player and self.player.teleport_cooldown > 0:
+            self.player.teleport_cooldown -= 1
+
         self.player.move()
 
         pill_hit = arcade.check_for_collision_with_list(self.player, self.pill_list)
@@ -299,11 +304,11 @@ class PacmanGame(arcade.View):
             if self.power_mode:
                 for ghost in ghosts_hit:
                     ghost.remove_from_sprite_lists()
-                    play_sound(EAT_GHOST_SOUND,10)
+                    arcade.play_sound(EAT_GHOST_SOUND,10)
                     self.player.score += 1000
             else:
                 self.lives -= 1
-                play_sound(GHOST_SOUND,20)
+                arcade.play_sound(GHOST_SOUND,20)
                 if self.lives <= 0:
                     self.game_over = True
                     #put sound of lose here!!!
@@ -355,19 +360,25 @@ class PacmanGame(arcade.View):
                 coin.set_power(False)
 
         tp_hits = arcade.check_for_collision_with_list(self.player, self.teleport_list)
-        if tp_hits:
-            for tp in self.teleport_list:
-                if tp not in tp_hits:
-                    self.player.center_x = tp.center_x
-                    self.player.center_y = tp.center_y
-                    arcade.play_sound(PORTAL_SOUND,10)
-                break
+        if tp_hits and self.player.teleport_cooldown == 0:
+            current_portal = tp_hits[0]
+
+            other_portals = [p for p in self.teleport_list if p is not current_portal]
+            if other_portals:
+                dest = random.choice(other_portals)
+
+                self.player.center_x = dest.center_x
+                self.player.center_y = dest.center_y
+
+                arcade.play_sound(PORTAL_SOUND)
+
+                self.player.teleport_cooldown = 5 * 60
 
         apples_hit = arcade.check_for_collision_with_list(self.player, self.apple_list)
         if apples_hit:
             self.power_mode = True
             self.power_timer = 10 * 60
-            play_sound(APPLE_SOUND,10)
+            arcade.play_sound(APPLE_SOUND,10)
 
         if self.power_mode:
             self.power_timer -= 1
