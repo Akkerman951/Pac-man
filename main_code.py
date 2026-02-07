@@ -33,7 +33,7 @@ RED_GHOST_PNG_R = load_texture(config["red_ghost_png1.r"])
 PORTAL_PNG1 = load_texture(config["portal_png1"])
 APPLE_PNG = load_texture(config["apple_png1"])
 PILL_PNG =  load_texture(config["pill_blue_png1"])
-SPLASH_PNG = load_texture("texture/starting_screen.jpg")
+SPLASH_PNG = load_texture("texture/starting_screen1.jpg.jpeg")
 
 def load_level_map(filename):
     level_map = []
@@ -271,7 +271,6 @@ class PacmanGame(arcade.View):
         self.max_score = len(self.coin_list) * 300 + len(self.apple_list) * 500 + 4 * 1000
 
     def spawn_white_coin(self):
-        # Если белая монета уже есть, не спавним новую
         if len(self.white_coin_list) > 0:
             return
 
@@ -396,30 +395,27 @@ class PacmanGame(arcade.View):
         self.white_coin_timer -= 1
         if self.white_coin_timer <= 0:
             self.spawn_white_coin()
-            self.white_coin_timer = 5 * 60  # спавн раз в 5 секунд
+            self.white_coin_timer = 5 * 60
 
-        # таймер жизни белой монеты
         for coin in self.white_coin_list:
             coin.timer += 1
             if coin.timer >= coin.duration:
                 coin.remove_from_sprite_lists()
 
-        # проверка на подбор белой монеты
         white_hits = arcade.check_for_collision_with_list(self.player,self.white_coin_list)
         for coin in white_hits:
             coin.remove_from_sprite_lists()
-            self.white_coin_speed_timer = 5 * 60  # 5 секунд ускорения
+            self.white_coin_speed_timer = 5 * 60
             for ghost in self.ghost_list:
-                # сохраняем направление движения, увеличиваем скорость
+
                 ghost.change_x *= 2
                 ghost.change_y *= 2
 
-        # если таймер ускорения активен
         if hasattr(self,"white_coin_speed_timer"):
             self.white_coin_speed_timer -= 1
             if self.white_coin_speed_timer <= 0:
                 for ghost in self.ghost_list:
-                    # возвращаем скорость к нормальной, сохраняя направление
+
                     ghost.change_x = (ghost.change_x // abs(ghost.change_x) if ghost.change_x != 0 else 0) * 4
                     ghost.change_y = (ghost.change_y // abs(ghost.change_y) if ghost.change_y != 0 else 0) * 4
                 del self.white_coin_speed_timer
