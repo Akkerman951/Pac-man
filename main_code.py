@@ -193,6 +193,7 @@ class PacmanGame(arcade.View):
         self.speed_up = False
         self.speed_up_timer = 0
         self.white_coin_timer = 5 * 60
+        self.counter = 0
 
         self.start_x = 0
         self.start_y = 0
@@ -305,13 +306,17 @@ class PacmanGame(arcade.View):
         self.player_list.draw()
         self.pill_list.draw()
 
-        arcade.draw_text(f"Score: {self.player.score}", 10, WINDOW_HEIGHT - 30, arcade.color.WHITE, 16)
-        arcade.draw_text(f"Lives: {self.lives}", 10, WINDOW_HEIGHT - 55, arcade.color.WHITE, 16)
+        arcade.draw_text(f"Score: {self.player.score}", 10, WINDOW_HEIGHT - 45, arcade.color.WHITE, 16)
+        arcade.draw_text(f"Lives: {self.lives}", 10, WINDOW_HEIGHT - 65, arcade.color.WHITE, 16)
+        arcade.draw_text(f"Time: {round(self.counter)} s", 10, WINDOW_HEIGHT - 25 , arcade.color.WHITE, 16)
 
         if self.game_over:
-            arcade.draw_text("GAME OVER", WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2, arcade.color.RED, 32)
+            arcade.draw_text("GAME OVER!", WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2, arcade.color.RED, 32)
+            arcade.draw_text(f"TIME YOU SPENT: {round(self.counter)} s",WINDOW_WIDTH / 2 - 150,WINDOW_HEIGHT / 2 - 40, arcade.color.PINK,32)
         elif self.win:
             arcade.draw_text("YOU WIN!", WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2, arcade.color.PINK, 32)
+            arcade.draw_text(f"TIME YOU SPENT: {round(self.counter)} s", WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 40, arcade.color.PINK, 32)
+            arcade.draw_text(f"LIFES YOU SPENT: {abs(self.lives - 3)}", WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 80, arcade.color.PINK, 32)
 
     def on_key_press(self, key: int, modifiers):
         if key in (arcade.key.UP, arcade.key.W):
@@ -333,7 +338,7 @@ class PacmanGame(arcade.View):
 
         if self.player and self.player.teleport_cooldown > 0:
             self.player.teleport_cooldown -= 1
-
+        self.counter += 1 / 60
         self.player.move()
 
         # ------------------ Pill ------------------
@@ -388,8 +393,16 @@ class PacmanGame(arcade.View):
             coin.remove_from_sprite_lists()
             arcade.play_sound(COIN_SOUND)
 
+        blink_power = False
+        if self.power_mode and self.power_timer <= 2 * 60:
+            blink_power = (self.power_timer // 12) % 2 == 0
+
         for coin in self.coin_list:
-            coin.set_power(self.power_mode)
+            if self.power_mode and self.power_timer <= 2 * 60:
+                coin.set_power(blink_power)
+                #put here sound of 2 last sec of power mode!!!
+            else:
+                coin.set_power(self.power_mode)
 
         # ------------------ White Coin ------------------
         self.white_coin_timer -= 1
@@ -459,10 +472,15 @@ class PacmanGame(arcade.View):
             arcade.play_sound(WIN_SOUND, 20)
             self.win = True
 
+        if self.game_over:
+            #put sound of lose here!!!
+            pass
+
 # ------------------ MAIN ------------------
 def main():
     window = arcade.Window(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
     window.show_view(SplashScreen())
+    #put sound of starting screen here!!!
     arcade.run()
 
 if __name__ == "__main__":
