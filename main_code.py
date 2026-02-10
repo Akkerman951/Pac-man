@@ -202,6 +202,7 @@ class PacmanGame(arcade.View):
         self.counter = 0
         self.exit = False
         self.paused_velocity = (0, 0)
+        self.show_credits = False
 
         self.start_x = 0
         self.start_y = 0
@@ -349,24 +350,55 @@ class PacmanGame(arcade.View):
                 obj.draw()
 
         if self.game_over:
+            arcade.draw_text("To see credits press: C",WINDOW_WIDTH - 240, WINDOW_HEIGHT - 25, arcade.color.CHERRY, 20)
             draw_text_block([
                 ("GAME OVER!", WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2, arcade.color.RED, 32),
                 (f"TIME YOU SPENT: {round(self.counter)} s", WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 40, arcade.color.PINK, 32),
             ])
         elif self.win:
+            arcade.draw_text("To see credits press: C",WINDOW_WIDTH - 240, WINDOW_HEIGHT - 25, arcade.color.CHERRY, 20)
             draw_text_block([
                 ("YOU WIN!", WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2, arcade.color.PINK, 32),
                 (f"TIME YOU SPENT: {round(self.counter)} s", WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 40, arcade.color.PINK, 32),
                 (f"LIFES YOU SPENT: {abs(self.lives - 3)}", WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 80, arcade.color.PINK, 32),
             ])
         elif self.exit:
+            arcade.draw_text("To see credits press: C",WINDOW_WIDTH - 240, WINDOW_HEIGHT - 25, arcade.color.CHERRY, 20)
             draw_text_block([
                 ("Are you sure you want to quit?", WINDOW_WIDTH / 2 - 250, WINDOW_HEIGHT / 2 - 10, arcade.color.PINK, 32),
                 ("To continue press SPACE", WINDOW_WIDTH / 2 - 180, WINDOW_HEIGHT / 2 - 50, arcade.color.GREEN, 32),
                 ("To quit press ESC", WINDOW_WIDTH / 2 - 120, WINDOW_HEIGHT / 2 - 90, arcade.color.RED, 32),
             ])
 
+        if self.show_credits and (self.game_over or self.win or self.exit):
+            credits = [
+                "DEVELOPED BY: DALTON.GAMES",
+                " ",
+                " ",
+                " ",
+                " ",
+                "Team:",
+                "SASHA PERCHIK",
+                "MARK DONOV",
+                "SEVVA BOGOMOLOV",
+                "KIM POLYATSKYI",
+                "ANITA KNUAZEVA",
+            ]
+            size = 45
+            line_gap = 8
+            total_height = len(credits) * (size + line_gap) - line_gap
+            start_y = WINDOW_HEIGHT / 2 + total_height / 2
+            max_width = max(arcade.Text(t, 0, 0, arcade.color.BROWN, size).content_width for t in credits)
+            arcade.draw_lrbt_rectangle_filled(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, arcade.color.COOL_BLACK)
+            y = start_y - size
+            for text in credits:
+                arcade.draw_text(text, WINDOW_WIDTH / 2 - max_width / 2, y, arcade.color.BROWN, size)
+                y -= size + line_gap
+
     def on_key_press(self, key: int, modifiers):
+        if (self.game_over or self.win or self.exit) and key == arcade.key.C:
+            self.show_credits = not self.show_credits
+            return
         if self.exit:
             if key == arcade.key.ESCAPE:
                 self.window.close()
