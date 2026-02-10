@@ -320,7 +320,7 @@ class PacmanGame(arcade.View):
                     pill.center_y = y
                     self.pill_list.append(pill)
 
-        self.max_score = len(self.coin_list) * 300 + len(self.apple_list) * 500 + 4 * 1000
+        self.max_score = len(self.coin_list) * 300 + len(self.apple_list) * 500 + 4 * 250
 
     def spawn_white_coin(self):
         if len(self.white_coin_list) > 0:
@@ -515,7 +515,7 @@ class PacmanGame(arcade.View):
                 for ghost in ghosts_hit:
                     ghost.remove_from_sprite_lists()
                     arcade.play_sound(EAT_GHOST_SOUND, 10)
-                    self.player.score += 1000
+                    self.player.score += 250
             else:
                 self.lives -= 1
                 arcade.play_sound(GHOST_SOUND, 20)
