@@ -34,6 +34,12 @@ PORTAL_PNG1 = load_texture(config["portal_png1"])
 APPLE_PNG = load_texture(config["apple_png1"])
 PILL_PNG =  load_texture(config["pill_blue_png1"])
 SPLASH_PNG = load_texture("texture/starting_screen1.jpg.jpeg")
+PACMEN_UP_PNG = load_texture(config["pacmen_u_png1"])
+PACMEN_DOWN_PNG = load_texture(config["pacmen_d_png1"])
+PACMEN_RAIGHT_PNG = load_texture(config["pacmen_r_png1"])
+PACMEN_LEFT_PNG = load_texture(config["pacmen_l_png1"])
+
+
 
 def load_level_map(filename):
     level_map = []
@@ -87,7 +93,7 @@ class SplashScreen(arcade.View):
 # ------------------ SPRITES ------------------
 class Pacman(arcade.Sprite):
     def __init__(self):
-        texture = arcade.make_circle_texture(TILE_SIZE, arcade.color.YELLOW)
+        texture = PACMEN_UP_PNG
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
@@ -334,15 +340,29 @@ class PacmanGame(arcade.View):
                     self.player.change_x, self.player.change_y = self.paused_velocity
             return
         if key in (arcade.key.UP, arcade.key.W):
+            self.player.texture = PACMEN_UP_PNG
+            self.player.height = TILE_SIZE
+            self.player.width = TILE_SIZE
             self.player.change_x = 0
             self.player.change_y = self.player.speed
+
+
         elif key in (arcade.key.DOWN, arcade.key.S):
+            self.player.texture = PACMEN_DOWN_PNG
+            self.player.width = TILE_SIZE
+            self.player.height = TILE_SIZE
             self.player.change_x = 0
             self.player.change_y = -self.player.speed
         elif key in (arcade.key.RIGHT, arcade.key.D):
+            self.player.texture = PACMEN_RAIGHT_PNG
+            self.player.width = TILE_SIZE
+            self.player.height = TILE_SIZE
             self.player.change_x = self.player.speed
             self.player.change_y = 0
         elif key in (arcade.key.LEFT, arcade.key.A):
+            self.player.texture = PACMEN_LEFT_PNG
+            self.player.width = TILE_SIZE
+            self.player.height = TILE_SIZE
             self.player.change_x = -self.player.speed
             self.player.change_y = 0
         elif key == arcade.key.ESCAPE:

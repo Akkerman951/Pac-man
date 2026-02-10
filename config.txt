@@ -13,3 +13,7 @@ red_ghost_png1.r= texture/texture1/red_ghost_righ1_png1.png
 portal_png1= texture/texture1/portal_png.png
 apple_png1= texture/texture1/apple1.jpg
 pill_blue_png1= texture/texture1/blue_pill_png.png
+pacmen_r_png1= texture/texture1/pacmen_right_png1.png
+pacmen_d_png1= texture/texture1/pacmen_down_png1.png
+pacmen_u_png1= texture/texture1/pacmen_up_png1.png
+pacmen_l_png1= texture/texture1/pacmen_left_png2.png
