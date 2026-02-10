@@ -107,6 +107,7 @@ class Pacman(arcade.Sprite):
         self.speed_grader = 1
         self.speed = self.speed_basic
         self.teleport_cooldown = 0
+        self.is_have_key = False
 
     def move(self):
         self.center_x += self.change_x
@@ -147,7 +148,7 @@ class Coin(arcade.Sprite):
         self.normal_texture = arcade.make_circle_texture(16, arcade.color.YELLOW)
         self.power_texture = arcade.make_circle_texture(16, arcade.color.PINK)
         super().__init__(self.normal_texture)
-        self.value = 300
+        self.value = 5
 
     def set_power(self, power: bool):
         self.texture = self.power_texture if power else self.normal_texture
@@ -172,11 +173,25 @@ class Apple(arcade.Sprite):
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
-        self.value = 500
+        self.value = 50
 
 class Pill(arcade.Sprite):
     def __init__(self):
         texture = PILL_PNG
+        super().__init__(texture)
+        self.width = TILE_SIZE
+        self.height = TILE_SIZE
+
+class Key(arcade.Sprite):
+    def __init__(self):
+        texture = arcade.make_circle_texture(16, arcade.color.RED)
+        super().__init__(texture)
+        self.width = TILE_SIZE
+        self.height = TILE_SIZE
+
+class Gate(arcade.Sprite):
+    def __init__(self):
+        texture = arcade.make_soft_square_texture(TILE_SIZE, arcade.color.RED, 255, 255)
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
@@ -193,6 +208,8 @@ class PacmanGame(arcade.View):
         self.pill_list = arcade.SpriteList()
         self.apple_list = arcade.SpriteList()
         self.white_coin_list = arcade.SpriteList()
+        self.gate_list = arcade.SpriteList()
+        self.key_list = arcade.SpriteList()
 
         self.player = None
         self.game_over = False
@@ -221,6 +238,8 @@ class PacmanGame(arcade.View):
         self.pill_list = arcade.SpriteList()
         self.apple_list = arcade.SpriteList()
         self.white_coin_list = arcade.SpriteList()
+        self.gate_list = arcade.SpriteList()
+        self.key_list = arcade.SpriteList()
 
         self.game_over = False
         self.win = False
@@ -242,11 +261,13 @@ class PacmanGame(arcade.View):
                     wall.center_x = x
                     wall.center_y = y
                     self.wall_list.append(wall)
+
                 elif cell == ".":
                     coin = Coin()
                     coin.center_x = x
                     coin.center_y = y
                     self.coin_list.append(coin)
+
                 elif cell == "G":
                     for i in range(4):
                         ghost = Ghost()
@@ -257,11 +278,13 @@ class PacmanGame(arcade.View):
                     apple.center_x = x
                     apple.center_y = y
                     self.apple_list.append(apple)
+
                 elif cell == "T":
                     teleport = Teleport()
                     teleport.center_x = x
                     teleport.center_y = y
                     self.teleport_list.append(teleport)
+
                 elif cell == "P":
                     self.player = Pacman()
                     self.player.center_x = x
@@ -269,6 +292,18 @@ class PacmanGame(arcade.View):
                     self.start_x = x
                     self.start_y = y
                     self.player_list.append(self.player)
+
+                elif cell == "K":
+                    self.key = Key()
+                    self.key.center_x = x
+                    self.key.center_y = y
+                    self.key_list.append(self.key)
+
+                elif cell == "E":
+                    self.gate = Gate()
+                    self.gate.center_x = x
+                    self.gate.center_y = y
+                    self.gate_list.append(self.gate)
                 elif cell == "A":
                     apple = Apple()
                     apple.center_x = x
@@ -316,7 +351,8 @@ class PacmanGame(arcade.View):
         self.ghost_list.draw()
         self.player_list.draw()
         self.pill_list.draw()
-
+        self.key_list.draw()
+        self.gate_list.draw()
         arcade.draw_text(f"Score: {self.player.score}", 10, WINDOW_HEIGHT - 45, arcade.color.WHITE, 16)
         arcade.draw_text(f"Lives: {self.lives}", 10, WINDOW_HEIGHT - 65, arcade.color.WHITE, 16)
         arcade.draw_text(f"Time: {round(self.counter)} s", 10, WINDOW_HEIGHT - 25 , arcade.color.WHITE, 16)
@@ -565,6 +601,19 @@ class PacmanGame(arcade.View):
         if self.exit:
             #put sound of pause here!!!
             pass
+
+        # -----------------Keys and Gates -------------------
+        key_hits = arcade.check_for_collision_with_list(self.player, self.key_list)
+        if key_hits:
+            self.key.remove_from_sprite_lists()
+            self.player.is_have_key = True
+        gate_hits = arcade.check_for_collision_with_list(self.player, self.gate_list)
+        if gate_hits and self.player.is_have_key:
+            self.gate.remove_from_sprite_lists()
+        elif gate_hits and self.player.is_have_key is False:
+            self.player.center_x = mat_x * TILE_SIZE + 16
+            self.player.center_y = mat_y * TILE_SIZE + 16
+
 
 # ------------------ MAIN ------------------
 def main():
