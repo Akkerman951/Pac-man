@@ -130,7 +130,6 @@ class Pacman(arcade.Sprite):
         self.teleport_cooldown = 0
         self.is_have_key = False
 
-
     def move(self):
         self.center_x += self.change_x
         self.center_y += self.change_y
@@ -149,61 +148,21 @@ class Teleport(arcade.Sprite):
         self.width = TILE_SIZE
         self.height = TILE_SIZE
 
-
-
-# ---- ЗАМЕНЕННЫЙ КЛАСС Ghost С ПЛАВНОЙ АНИМАЦИЕЙ ----
 class Ghost(arcade.Sprite):
     def __init__(self):
-        # стартовый кадр — вправо
-        super().__init__(RED_GHOST_FRAMES_R[0])
+        texture = RED_GHOST_PNG_R
+        super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
-
-
-        # базовая скорость — оставляем 4, как в оригинале
-        self.base_speed = 2
-
-        # стартовое направление (влево/вправо случайно)
-        self.change_x = random.choice([-1, 1]) * self.base_speed
+        self.change_x = random.choice([-1, 1]) * 4
         self.change_y = 0
 
-        # текущее направление для выбора набора кадров: 'r','l','u','d'
-        self._dir = "r" \
-            if self.change_x > 0\
-            else "l"
-
-        # словарь анимационных кадров
-        self.anim_frames = {
-            "r": RED_GHOST_FRAMES_R,
-            "l": RED_GHOST_FRAMES_L,
-            "u": RED_GHOST_FRAMES_U,
-            "d": RED_GHOST_FRAMES_D,
-        }
-
-        # состояние анимации
-        self.anim_index = 0
-        self.anim_timer = 0.0
-        # интервал между кадрами (в секундах). Поменяй для быстрой/медленной анимации.
-        self.anim_interval = 0.12
-
     def update(self, delta_time: float = 1 / 60, *args, **kwargs):
-        # движение
+        self.move()
+
+    def move(self):
         self.center_x += self.change_x
         self.center_y += self.change_y
-
-        # определяем направление движения (чтобы выбрать кадры)
-        if abs(self.change_x) > 0:
-            self._dir = "r" if self.change_x > 0 else "l"
-        elif abs(self.change_y) > 0:
-            self._dir = "u" if self.change_y > 0 else "d"
-
-        # анимация: переключаем кадры по таймеру
-        self.anim_timer += delta_time
-        if self.anim_timer >= self.anim_interval:
-            self.anim_timer -= self.anim_interval
-            frames = self.anim_frames[self._dir]
-            self.anim_index = (self.anim_index + 1) % len(frames)
-            self.texture = frames[self.anim_index]
 
 class Coin(arcade.Sprite):
     def __init__(self):
@@ -211,7 +170,6 @@ class Coin(arcade.Sprite):
         self.power_texture = arcade.make_circle_texture(16, arcade.color.PINK)
         super().__init__(self.normal_texture)
         self.value = 5
-
 
     def set_power(self, power: bool):
         self.texture = self.power_texture if power else self.normal_texture
@@ -223,14 +181,12 @@ class WhiteCoin(arcade.Sprite):
         self.timer = 0
         self.duration = 10 * 60
 
-
 class Wall(arcade.Sprite):
     def __init__(self):
         texture = arcade.make_soft_square_texture(TILE_SIZE, arcade.color.BLUE, 255, 255)
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
-
 
 class Apple(arcade.Sprite):
     def __init__(self):
@@ -240,16 +196,12 @@ class Apple(arcade.Sprite):
         self.height = TILE_SIZE
         self.value = 50
 
-
-
 class Pill(arcade.Sprite):
     def __init__(self):
         texture = PILL_PNG
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
-
-
 
 class Key(arcade.Sprite):
     def __init__(self):
@@ -258,16 +210,12 @@ class Key(arcade.Sprite):
         self.width = TILE_SIZE
         self.height = TILE_SIZE
 
-
-
 class Gate(arcade.Sprite):
     def __init__(self):
         texture = arcade.make_soft_square_texture(TILE_SIZE, arcade.color.RED, 255, 255)
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
-
-
 
 # ------------------ GAME ------------------
 class PacmanGame(arcade.View):
@@ -393,11 +341,9 @@ class PacmanGame(arcade.View):
                     pill.center_y = y
                     self.pill_list.append(pill)
 
-        # макс. очков — оставил твою формулу (но имей в виду коэффициенты большие)
         self.max_score = len(self.coin_list) * 300 + len(self.apple_list) * 500 + 4 * 1000
 
     def spawn_white_coin(self):
-        # если уже есть белая монета — ничего не делаем
         if len(self.white_coin_list) > 0:
             return
 
@@ -618,21 +564,31 @@ class PacmanGame(arcade.View):
 
         # ------------------ Move ghosts ------------------
         for ghost in self.ghost_list:
-            matr_x = int(ghost.center_x // TILE_SIZE)
-            matr_y = int(ghost.center_y // TILE_SIZE)
-
-            # обновляем движение + анимацию (передаём delta_time)
-            ghost.update(delta_time)
-
-            # если призрак уперся в стену, даём ему новое случайное направление
+            matr_x = ghost.center_x // TILE_SIZE
+            matr_y = ghost.center_y // TILE_SIZE
+            if ghost.change_x == 2 and ghost.change_y == 0:
+                if ghost.texture == RED_GHOST_PNG_R:
+                    ghost.texture = RED_GHOST_PNG_R2
+                else: ghost.texture = RED_GHOST_PNG_R
+            if ghost.change_x == -2 and ghost.change_y == 0:
+                if ghost.texture == RED_GHOST_PNG_L:
+                    ghost.texture = RED_GHOST_PNG_L2
+                else: ghost.texture = RED_GHOST_PNG_L
+            if ghost.change_x == 0 and ghost.change_y == 2:
+                if ghost.texture == RED_GHOST_PNG_U:
+                    ghost.texture = RED_GHOST_PNG_U2
+                else:
+                    ghost.texture = RED_GHOST_PNG_U
+            if ghost.change_x == 0 and ghost.change_y == -2:
+                if ghost.texture == RED_GHOST_PNG_D:
+                    ghost.texture = RED_GHOST_PNG_D2
+                else:
+                    ghost.texture = RED_GHOST_PNG_D
+            ghost.update()
             if arcade.check_for_collision_with_list(ghost, self.wall_list):
-                speed = getattr(ghost, "base_speed", 4)
-                ghost.change_x, ghost.change_y = random.choice(
-                    [(speed, 0), (-speed, 0), (0, speed), (0, -speed)]
-                )
-                # центрируем в ячейке
-                ghost.center_x = matr_x * TILE_SIZE + TILE_SIZE / 2
-                ghost.center_y = matr_y * TILE_SIZE + TILE_SIZE / 2
+                ghost.change_x, ghost.change_y = random.choice([(2,0),(-2,0),(0,2),(0,-2)])
+                ghost.center_x = matr_x * TILE_SIZE + 16
+                ghost.center_y = matr_y * TILE_SIZE + 16
 
         # ------------------ Coins ------------------
         coins_hit = arcade.check_for_collision_with_list(self.player, self.coin_list)
@@ -668,6 +624,7 @@ class PacmanGame(arcade.View):
             coin.remove_from_sprite_lists()
             self.white_coin_speed_timer = 5 * 60
             for ghost in self.ghost_list:
+
                 ghost.change_x *= 2
                 ghost.change_y *= 2
 
@@ -675,11 +632,9 @@ class PacmanGame(arcade.View):
             self.white_coin_speed_timer -= 1
             if self.white_coin_speed_timer <= 0:
                 for ghost in self.ghost_list:
-                    sign_x = (ghost.change_x // abs(ghost.change_x)) if ghost.change_x != 0 else 0
-                    sign_y = (ghost.change_y // abs(ghost.change_y)) if ghost.change_y != 0 else 0
-                    base = getattr(ghost, "base_speed", 4)
-                    ghost.change_x = sign_x * base
-                    ghost.change_y = sign_y * base
+
+                    ghost.change_x = (ghost.change_x // abs(ghost.change_x) if ghost.change_x != 0 else 0) * 4
+                    ghost.change_y = (ghost.change_y // abs(ghost.change_y) if ghost.change_y != 0 else 0) * 4
                 del self.white_coin_speed_timer
 
         # ------------------ Power mode ------------------
