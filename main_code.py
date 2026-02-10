@@ -30,6 +30,9 @@ EAT_GHOST_SOUND = load_sound(config["eat_ghost_sound1"])
 PILL_SOUND = load_sound(config["pill_sound1"])
 
 RED_GHOST_PNG_R = load_texture(config["red_ghost_png1.r"])
+RED_GHOST_PNG_L = load_texture(config["red_ghost_png1.l"])
+RED_GHOST_PNG_U = load_texture(config["red_ghost_png1.u"])
+RED_GHOST_PNG_D = load_texture(config["red_ghost_png1.d"])
 PORTAL_PNG1 = load_texture(config["portal_png1"])
 APPLE_PNG = load_texture(config["apple_png1"])
 PILL_PNG =  load_texture(config["pill_blue_png1"])
@@ -488,6 +491,14 @@ class PacmanGame(arcade.View):
         for ghost in self.ghost_list:
             matr_x = ghost.center_x // TILE_SIZE
             matr_y = ghost.center_y // TILE_SIZE
+            if ghost.change_x == 2 and ghost.change_y == 0:
+                ghost.texture = RED_GHOST_PNG_R
+            if ghost.change_x == -2 and ghost.change_y == 0:
+                ghost.texture = RED_GHOST_PNG_L
+            if ghost.change_x == 0 and ghost.change_y == 2:
+                ghost.texture = RED_GHOST_PNG_U
+            if ghost.change_x == 0 and ghost.change_y == -2:
+                ghost.texture = RED_GHOST_PNG_D
             ghost.update()
             if arcade.check_for_collision_with_list(ghost, self.wall_list):
                 ghost.change_x, ghost.change_y = random.choice([(2,0),(-2,0),(0,2),(0,-2)])
