@@ -318,17 +318,53 @@ class PacmanGame(arcade.View):
         arcade.draw_text(f"Lives: {self.lives}", 10, WINDOW_HEIGHT - 65, arcade.color.WHITE, 16)
         arcade.draw_text(f"Time: {round(self.counter)} s", 10, WINDOW_HEIGHT - 25 , arcade.color.WHITE, 16)
 
+        def draw_text_block(text_items, pad=12,border=6,
+                            inner_color=arcade.color.INDIGO,
+                            outer_color=arcade.color.IMPERIAL_PURPLE):
+            text_objs = [arcade.Text(t, x, y, c, s) for t, x, y, c, s in text_items]
+            left = float("inf")
+            right = float("-inf")
+            bottom = float("inf")
+            top = float("-inf")
+            for obj in text_objs:
+                left = min(left, obj.x)
+                right = max(right, obj.x + obj.content_width)
+                bottom = min(bottom, obj.y)
+                top = max(top, obj.y + obj.content_height)
+            arcade.draw_lrbt_rectangle_filled(
+                left - (pad + border) - 5,
+                right + (pad + border) + 5,
+                bottom - (pad + border) - 15,
+                top + (pad + border) - 6,
+                outer_color,
+            )
+            arcade.draw_lrbt_rectangle_filled(
+                left - pad,
+                right + pad,
+                bottom - pad - 10,
+                top + pad - 12,
+                inner_color,
+            )
+            for obj in text_objs:
+                obj.draw()
+
         if self.game_over:
-            arcade.draw_text("GAME OVER!", WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2, arcade.color.RED, 32)
-            arcade.draw_text(f"TIME YOU SPENT: {round(self.counter)} s",WINDOW_WIDTH / 2 - 150,WINDOW_HEIGHT / 2 - 40, arcade.color.PINK,32)
+            draw_text_block([
+                ("GAME OVER!", WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2, arcade.color.RED, 32),
+                (f"TIME YOU SPENT: {round(self.counter)} s", WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 40, arcade.color.PINK, 32),
+            ])
         elif self.win:
-            arcade.draw_text("YOU WIN!", WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2, arcade.color.PINK, 32)
-            arcade.draw_text(f"TIME YOU SPENT: {round(self.counter)} s", WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 40, arcade.color.PINK, 32)
-            arcade.draw_text(f"LIFES YOU SPENT: {abs(self.lives - 3)}", WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 80, arcade.color.PINK, 32)
+            draw_text_block([
+                ("YOU WIN!", WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2, arcade.color.PINK, 32),
+                (f"TIME YOU SPENT: {round(self.counter)} s", WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 40, arcade.color.PINK, 32),
+                (f"LIFES YOU SPENT: {abs(self.lives - 3)}", WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 80, arcade.color.PINK, 32),
+            ])
         elif self.exit:
-            arcade.draw_text("Are you sure you want to quit?",WINDOW_WIDTH / 2 - 250,WINDOW_HEIGHT / 2 - 10, arcade.color.PINK, 32)
-            arcade.draw_text("To continue press SPACE",WINDOW_WIDTH / 2 - 180,WINDOW_HEIGHT / 2 - 50,arcade.color.GREEN,32)
-            arcade.draw_text("To quit press ESC",WINDOW_WIDTH / 2 - 120,WINDOW_HEIGHT / 2 - 90, arcade.color.RED, 32)
+            draw_text_block([
+                ("Are you sure you want to quit?", WINDOW_WIDTH / 2 - 250, WINDOW_HEIGHT / 2 - 10, arcade.color.PINK, 32),
+                ("To continue press SPACE", WINDOW_WIDTH / 2 - 180, WINDOW_HEIGHT / 2 - 50, arcade.color.GREEN, 32),
+                ("To quit press ESC", WINDOW_WIDTH / 2 - 120, WINDOW_HEIGHT / 2 - 90, arcade.color.RED, 32),
+            ])
 
     def on_key_press(self, key: int, modifiers):
         if self.exit:
