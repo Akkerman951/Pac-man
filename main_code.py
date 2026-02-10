@@ -194,6 +194,8 @@ class PacmanGame(arcade.View):
         self.speed_up_timer = 0
         self.white_coin_timer = 5 * 60
         self.counter = 0
+        self.exit = False
+        self.paused_velocity = (0, 0)
 
         self.start_x = 0
         self.start_y = 0
@@ -317,8 +319,20 @@ class PacmanGame(arcade.View):
             arcade.draw_text("YOU WIN!", WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2, arcade.color.PINK, 32)
             arcade.draw_text(f"TIME YOU SPENT: {round(self.counter)} s", WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 40, arcade.color.PINK, 32)
             arcade.draw_text(f"LIFES YOU SPENT: {abs(self.lives - 3)}", WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 80, arcade.color.PINK, 32)
+        elif self.exit:
+            arcade.draw_text("Are you sure you want to quit?",WINDOW_WIDTH / 2 - 250,WINDOW_HEIGHT / 2 - 10, arcade.color.PINK, 32)
+            arcade.draw_text("To continue press SPACE",WINDOW_WIDTH / 2 - 180,WINDOW_HEIGHT / 2 - 50,arcade.color.GREEN,32)
+            arcade.draw_text("To quit press ESC",WINDOW_WIDTH / 2 - 120,WINDOW_HEIGHT / 2 - 90, arcade.color.RED, 32)
 
     def on_key_press(self, key: int, modifiers):
+        if self.exit:
+            if key == arcade.key.ESCAPE:
+                self.window.close()
+            elif key == arcade.key.SPACE:
+                self.exit = False
+                if self.player:
+                    self.player.change_x, self.player.change_y = self.paused_velocity
+            return
         if key in (arcade.key.UP, arcade.key.W):
             self.player.change_x = 0
             self.player.change_y = self.player.speed
@@ -331,11 +345,17 @@ class PacmanGame(arcade.View):
         elif key in (arcade.key.LEFT, arcade.key.A):
             self.player.change_x = -self.player.speed
             self.player.change_y = 0
+        elif key == arcade.key.ESCAPE:
+            self.exit = True
+            if self.player:
+                self.paused_velocity = (self.player.change_x, self.player.change_y)
+                self.player.stop()
 
     def on_update(self, delta_time):
         if self.game_over or self.win:
             return
-
+        if self.exit:
+            return
         if self.player and self.player.teleport_cooldown > 0:
             self.player.teleport_cooldown -= 1
         self.counter += 1 / 60
