@@ -369,8 +369,8 @@ class PacmanGame(arcade.View):
             arcade.draw_text("To see credits press: C",WINDOW_WIDTH - 240, WINDOW_HEIGHT - 25, arcade.color.CHERRY, 20)
             draw_text_block([
                 ("Are you sure you want to quit?", WINDOW_WIDTH / 2 - 250, WINDOW_HEIGHT / 2 - 10, arcade.color.PINK, 32),
-                ("To continue press SPACE", WINDOW_WIDTH / 2 - 180, WINDOW_HEIGHT / 2 - 50, arcade.color.GREEN, 32),
-                ("To quit press ESC", WINDOW_WIDTH / 2 - 120, WINDOW_HEIGHT / 2 - 90, arcade.color.RED, 32),
+                ("To continue press: SPACE", WINDOW_WIDTH / 2 - 200, WINDOW_HEIGHT / 2 - 50, arcade.color.GREEN, 32),
+                ("To quit press: ESC", WINDOW_WIDTH / 2 - 140, WINDOW_HEIGHT / 2 - 90, arcade.color.RED, 32),
             ])
 
         if self.show_credits and (self.game_over or self.win or self.exit):
