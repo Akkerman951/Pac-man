@@ -33,6 +33,10 @@ RED_GHOST_PNG_R = load_texture(config["red_ghost_png1.r"])
 RED_GHOST_PNG_L = load_texture(config["red_ghost_png1.l"])
 RED_GHOST_PNG_U = load_texture(config["red_ghost_png1.u"])
 RED_GHOST_PNG_D = load_texture(config["red_ghost_png1.d"])
+RED_GHOST_PNG_R2 = load_texture(config["red_ghost_png2.r"])
+RED_GHOST_PNG_L2 = load_texture(config["red_ghost_png2.l"])
+RED_GHOST_PNG_U2 = load_texture(config["red_ghost_png2.u"])
+RED_GHOST_PNG_D2 = load_texture(config["red_ghost_png2.d"])
 PORTAL_PNG1 = load_texture(config["portal_png1"])
 APPLE_PNG = load_texture(config["apple_png1"])
 PILL_PNG =  load_texture(config["pill_blue_png1"])
@@ -528,13 +532,23 @@ class PacmanGame(arcade.View):
             matr_x = ghost.center_x // TILE_SIZE
             matr_y = ghost.center_y // TILE_SIZE
             if ghost.change_x == 2 and ghost.change_y == 0:
-                ghost.texture = RED_GHOST_PNG_R
+                if ghost.texture == RED_GHOST_PNG_R:
+                    ghost.texture = RED_GHOST_PNG_R2
+                else: ghost.texture = RED_GHOST_PNG_R
             if ghost.change_x == -2 and ghost.change_y == 0:
-                ghost.texture = RED_GHOST_PNG_L
+                if ghost.texture == RED_GHOST_PNG_L:
+                    ghost.texture = RED_GHOST_PNG_L2
+                else: ghost.texture = RED_GHOST_PNG_L
             if ghost.change_x == 0 and ghost.change_y == 2:
-                ghost.texture = RED_GHOST_PNG_U
+                if ghost.texture == RED_GHOST_PNG_U:
+                    ghost.texture = RED_GHOST_PNG_U2
+                else:
+                    ghost.texture = RED_GHOST_PNG_U
             if ghost.change_x == 0 and ghost.change_y == -2:
-                ghost.texture = RED_GHOST_PNG_D
+                if ghost.texture == RED_GHOST_PNG_D:
+                    ghost.texture = RED_GHOST_PNG_D2
+                else:
+                    ghost.texture = RED_GHOST_PNG_D
             ghost.update()
             if arcade.check_for_collision_with_list(ghost, self.wall_list):
                 ghost.change_x, ghost.change_y = random.choice([(2,0),(-2,0),(0,2),(0,-2)])
