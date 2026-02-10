@@ -24,3 +24,8 @@ red_ghost_png2.r= texture/texture1/red_ghost/red_ghost_right2_png.png
 red_ghost_png2.l= texture/texture1/red_ghost/red_ghost_left2_png.png
 red_ghost_png2.u= texture/texture1/red_ghost/red_ghost_up2_png.png
 red_ghost_png2.d= texture/texture1/red_ghost/red_ghost_down2_png.png
+
+RED_GHOST_FRAMES_R = [RED_GHOST_PNG_R, RED_GHOST_PNG_R2]
+RED_GHOST_FRAMES_L = [RED_GHOST_PNG_L, RED_GHOST_PNG_L2]
+RED_GHOST_FRAMES_U = [RED_GHOST_PNG_U, RED_GHOST_PNG_U2]
+RED_GHOST_FRAMES_D = [RED_GHOST_PNG_D, RED_GHOST_PNG_D2]
