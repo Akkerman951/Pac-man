@@ -495,6 +495,9 @@ class PacmanGame(arcade.View):
         if self.game_over:
             #put sound of lose here!!!
             pass
+        if self.exit:
+            #put sound of pause here!!!
+            pass
 
 # ------------------ MAIN ------------------
 def main():
