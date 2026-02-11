@@ -1,6 +1,6 @@
 import random
 import arcade
-from arcade import check_for_collision_with_list, load_sound, load_texture
+from arcade import check_for_collision_with_list, load_sound, load_texture, play_sound
 import os
 # ------------------ HELPERS ------------------
 def load_config(filename):
@@ -36,6 +36,8 @@ PILL_SOUND = load_sound(config.get("pill_sound1", ""))
 DEAF_SOUND = load_sound(config.get("def_sound1"))
 LOGO_SOUND = load_sound(config.get("logo_sound1"))
 POWER_END_SOUND = load_sound(config.get("power_end_sound1"))
+PLAY_SOUND = load_sound(config.get("play_sound1"))
+PAUSE_SOUND = load_sound(config.get("pause_sound1"))
 
 RED_GHOST_PNG_R = load_texture(config.get("red_ghost_png1.r", ""))
 RED_GHOST_PNG_L = load_texture(config.get("red_ghost_png1.l", ""))
@@ -464,7 +466,7 @@ class PacmanGame(arcade.View):
                 "Team:",
                 "SASHA PERCHIK",
                 "MARK DONOV",
-                "SEVVA BOGOMOLOV",
+                "VSEVOLOD BOGOMOLOV",
                 "KIM POLYATSKYI",
                 "ANITA KNUAZEVA",
             ]
@@ -481,12 +483,14 @@ class PacmanGame(arcade.View):
 
     def on_key_press(self, key: int, modifiers):
         if (self.game_over or self.win or self.exit) and key == arcade.key.C:
+            arcade.play_sound(PLAY_SOUND,2)
             self.show_credits = not self.show_credits
             return
         if self.exit:
             if key == arcade.key.ESCAPE:
                 self.window.close()
             elif key == arcade.key.SPACE:
+                arcade.play_sound(PLAY_SOUND,5)
                 self.exit = False
                 if self.player:
                     self.player.change_x, self.player.change_y = self.paused_velocity
@@ -518,6 +522,7 @@ class PacmanGame(arcade.View):
             self.player.change_x = -self.player.speed
             self.player.change_y = 0
         elif key == arcade.key.ESCAPE:
+            arcade.play_sound(PAUSE_SOUND,5)
             self.exit = True
             if self.player:
                 self.paused_velocity = (self.player.change_x, self.player.change_y)
