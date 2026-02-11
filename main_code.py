@@ -880,7 +880,7 @@ class PacmanGame(arcade.View):
             self.player.is_have_key = True
         gate_hits = arcade.check_for_collision_with_list(self.player, self.gate_list)
         if gate_hits and self.player.is_have_key:
-            arcade.play_sound(DOR_SOUND,5)
+            arcade.play_sound(DOR_SOUND,5,0,0,10)
             self.gate.remove_from_sprite_lists()
         elif gate_hits and self.player.is_have_key is False:
             self.player.center_x = mat_x * TILE_SIZE + TILE_SIZE / 2
