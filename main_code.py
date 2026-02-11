@@ -40,6 +40,7 @@ LOGO_SOUND = load_sound(config.get("logo_sound1"))
 POWER_END_SOUND = load_sound(config.get("power_end_sound1"))
 PLAY_SOUND = load_sound(config.get("play_sound1"))
 PAUSE_SOUND = load_sound(config.get("pause_sound1"))
+DOR_SOUND = load_sound(config.get("dor_sound1"))
 
 RED_GHOST_PNG_R = load_texture(config.get("red_ghost_png1.r", ""))
 RED_GHOST_PNG_L = load_texture(config.get("red_ghost_png1.l", ""))
@@ -874,10 +875,12 @@ class PacmanGame(arcade.View):
         # -----------------Keys and Gates -------------------
         key_hits = arcade.check_for_collision_with_list(self.player, self.key_list)
         if key_hits:
+            arcade.play_sound(PILL_SOUND,5)
             self.key.remove_from_sprite_lists()
             self.player.is_have_key = True
         gate_hits = arcade.check_for_collision_with_list(self.player, self.gate_list)
         if gate_hits and self.player.is_have_key:
+            arcade.play_sound(DOR_SOUND,5)
             self.gate.remove_from_sprite_lists()
         elif gate_hits and self.player.is_have_key is False:
             self.player.center_x = mat_x * TILE_SIZE + TILE_SIZE / 2
