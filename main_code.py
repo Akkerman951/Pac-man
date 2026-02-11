@@ -35,6 +35,7 @@ EAT_GHOST_SOUND = load_sound(config.get("eat_ghost_sound1", ""))
 PILL_SOUND = load_sound(config.get("pill_sound1", ""))
 DEAF_SOUND = load_sound(config.get("def_sound1"))
 LOGO_SOUND = load_sound(config.get("logo_sound1"))
+POWER_END_SOUND = load_sound(config.get("power_end_sound1"))
 
 RED_GHOST_PNG_R = load_texture(config.get("red_ghost_png1.r", ""))
 RED_GHOST_PNG_L = load_texture(config.get("red_ghost_png1.l", ""))
@@ -44,6 +45,8 @@ RED_GHOST_PNG_R2 = load_texture(config.get("red_ghost_png2.r", ""))
 RED_GHOST_PNG_L2 = load_texture(config.get("red_ghost_png2.l", ""))
 RED_GHOST_PNG_U2 = load_texture(config.get("red_ghost_png2.u", ""))
 RED_GHOST_PNG_D2 = load_texture(config.get("red_ghost_png2.d", ""))
+BLUE_PNG = load_texture(config.get("blue_ghost_png1"))
+GREY_PNG = load_texture(config.get("greu_ghost_png1"))
 
 PORTAL_PNG1 = load_texture(config.get("portal_png1"))
 APPLE_PNG = load_texture(config.get("apple_png1"))
@@ -570,27 +573,33 @@ class PacmanGame(arcade.View):
         for ghost in self.ghost_list:
             matr_x = ghost.center_x // TILE_SIZE
             matr_y = ghost.center_y // TILE_SIZE
-            if ghost.change_x == 2 and ghost.change_y == 0:
-                if ghost.texture == RED_GHOST_PNG_R:
-                    ghost.texture = RED_GHOST_PNG_R2
-                else: ghost.texture = RED_GHOST_PNG_R
-            if ghost.change_x == -2 and ghost.change_y == 0:
-                if ghost.texture == RED_GHOST_PNG_L:
-                    ghost.texture = RED_GHOST_PNG_L2
-                else: ghost.texture = RED_GHOST_PNG_L
-            if ghost.change_x == 0 and ghost.change_y == 2:
-                if ghost.texture == RED_GHOST_PNG_U:
-                    ghost.texture = RED_GHOST_PNG_U2
-                else:
+            if self.power_mode and not (ghost.texture in [BLUE_PNG,GREY_PNG]):
+                ghost.texture = BLUE_PNG
+            elif not self.power_mode and (ghost.texture in [BLUE_PNG,GREY_PNG]):
+                if ghost.change_x == 2 and ghost.change_y == 0:
+                    ghost.texture = RED_GHOST_PNG_R
+                if ghost.change_x == -2 and ghost.change_y == 0:
+                    ghost.texture = RED_GHOST_PNG_L
+                if ghost.change_x == 0 and ghost.change_y == 2:
                     ghost.texture = RED_GHOST_PNG_U
-            if ghost.change_x == 0 and ghost.change_y == -2:
-                if ghost.texture == RED_GHOST_PNG_D:
-                    ghost.texture = RED_GHOST_PNG_D2
-                else:
+                if ghost.change_x == 0 and ghost.change_y == -2:
                     ghost.texture = RED_GHOST_PNG_D
+
+
             ghost.update()
             if arcade.check_for_collision_with_list(ghost, self.wall_list):
                 ghost.change_x, ghost.change_y = random.choice([(2,0),(-2,0),(0,2),(0,-2)])
+                if self.power_mode:
+                    ghost.texture = random.choice([BLUE_PNG,GREY_PNG])
+                else:
+                    if ghost.change_x == 2 and ghost.change_y == 0:
+                            ghost.texture = RED_GHOST_PNG_R
+                    if ghost.change_x == -2 and ghost.change_y == 0:
+                            ghost.texture = RED_GHOST_PNG_L
+                    if ghost.change_x == 0 and ghost.change_y == 2:
+                            ghost.texture = RED_GHOST_PNG_U
+                    if ghost.change_x == 0 and ghost.change_y == -2:
+                            ghost.texture = RED_GHOST_PNG_D
                 ghost.center_x = matr_x * TILE_SIZE + 16
                 ghost.center_y = matr_y * TILE_SIZE + 16
 
@@ -650,6 +659,9 @@ class PacmanGame(arcade.View):
 
         if self.power_mode:
             self.power_timer -= 1
+            if self.power_timer == 2 * 60:
+                arcade.play_sound(POWER_END_SOUND,5)
+
             if self.power_timer <= 0:
                 self.power_mode = False
 
