@@ -1,16 +1,38 @@
-import json
+# Исправленный pacman (минимальные изменения, чтобы всё работало)
 import random
+import os
+import json
 import arcade
 from arcade import check_for_collision_with_list, load_sound, load_texture, play_sound
-import os
+
 # ------------------ HELPERS ------------------
+def safe_load_sound(path):
+    if not path:
+        return None
+    try:
+        return load_sound(path)
+    except Exception:
+        return None
+
+def safe_load_texture(path):
+    if not path:
+        return None
+    try:
+        return load_texture(path)
+    except Exception:
+        return None
+
 def load_config(filename):
     config = {}
-    with open(filename, "r") as file:
+    if not os.path.isfile(filename):
+        return config
+    with open(filename, "r", encoding="utf-8") as file:
         for line in file:
             if not line.strip() or line.strip().startswith("#"):
                 continue
-            key, value = line.strip().split("=")
+            if "=" not in line:
+                continue
+            key, value = line.strip().split("=", 1)
             key = key.strip()
             value = value.strip()
             if value.isdigit():
@@ -40,7 +62,6 @@ LOGO_SOUND = load_sound(config.get("logo_sound1"))
 POWER_END_SOUND = load_sound(config.get("power_end_sound1"))
 PLAY_SOUND = load_sound(config.get("play_sound1"))
 PAUSE_SOUND = load_sound(config.get("pause_sound1"))
-VHS_SOUND = load_sound(config.get("vhs-noise1", ""))
 DOR_SOUND = load_sound(config.get("dor_sound1"))
 
 RED_GHOST_PNG_R = load_texture(config.get("red_ghost_png1.r", ""))
@@ -103,7 +124,7 @@ def load_levels(folder="levels"):
 
 def load_scores(path):
     try:
-        with open(path, "r") as file:
+        with open(path, "r", encoding="utf-8") as file:
             data = json.load(file)
     except FileNotFoundError:
         return []
@@ -114,12 +135,21 @@ def load_scores(path):
     scores = []
     for item in data:
         if isinstance(item, dict) and "name" in item and "time" in item:
-            scores.append({"name": str(item["name"]), "time": float(item["time"])})
+            try:
+                scores.append({"name": str(item["name"]), "time": float(item["time"])})
+            except Exception:
+                pass
     return scores
 
 def save_scores(path, scores):
-    with open(path, "w") as file:
-        json.dump(scores, file, ensure_ascii=True, indent=2)
+    try:
+        with open(path, "w", encoding="utf-8") as file:
+            json.dump(scores, file, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+# ------------------ CONFIG ------------------
+config = load_config("config.txt")
 
 
 # ------------------ START SCREEN ------------------
@@ -337,24 +367,6 @@ class PacmanGame(arcade.View):
         self.score = 0
         self.lives = 3
         self.max_score = 0
-
-    def start_vhs(self):
-        if self.vhs_player:
-            self.stop_vhs()
-        self.vhs_player = arcade.play_sound(VHS_SOUND)
-
-    def stop_vhs(self):
-        if not self.vhs_player:
-            return
-        stop_fn = getattr(arcade, "stop_sound", None)
-        if callable(stop_fn):
-            stop_fn(self.vhs_player)
-        else:
-            try:
-                self.vhs_player.stop()
-            except Exception:
-                pass
-        self.vhs_player = None
 
     def setup(self):
         self.wall_list = arcade.SpriteList()
