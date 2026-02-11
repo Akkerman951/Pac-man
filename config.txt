@@ -18,6 +18,7 @@ portal_png1= texture/texture1/other_sprites/portal_png.png
 apple_png1= texture/texture1/other_sprites/cake_png.png
 pill_blue_png1= texture/texture1/other_sprites/coffe_png.png
 key_png1= texture/texture1/other_sprites/keu_png11.png
+gate_png1=  texture/texture1/other_sprites/gate_png.png
 pacmen_r_png1= texture/texture1/pacmen/pacmen_right_png1.png
 pacmen_d_png1= texture/texture1/pacmen/pacmen_down_png1.png
 pacmen_u_png1= texture/texture1/pacmen/pacmen_up_png1.png

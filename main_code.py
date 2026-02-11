@@ -59,6 +59,7 @@ PACMEN_DOWN_PNG = load_texture(config.get("pacmen_d_png1", ""))
 PACMEN_RAIGHT_PNG = load_texture(config.get("pacmen_r_png1", ""))
 PACMEN_LEFT_PNG = load_texture(config.get("pacmen_l_png1", ""))
 KEY_PNG = load_texture(config.get("key_png1", ""))
+GATE_PNG = load_texture(config.get("gate_png1"))
 
 # сгруппированные фреймы призрака (по направлению)
 RED_GHOST_FRAMES_R = [RED_GHOST_PNG_R, RED_GHOST_PNG_R2]
@@ -220,7 +221,7 @@ class Key(arcade.Sprite):
 
 class Gate(arcade.Sprite):
     def __init__(self):
-        texture = arcade.make_soft_square_texture(TILE_SIZE, arcade.color.RED, 255, 255)
+        texture = GATE_PNG
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
