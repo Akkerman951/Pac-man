@@ -903,7 +903,6 @@ class PacmanGame(arcade.View):
             self.player.center_x = mat_x * TILE_SIZE + TILE_SIZE / 2
             self.player.center_y = mat_y * TILE_SIZE + TILE_SIZE / 2
 
-
 # ------------------ MAIN ------------------
 def main():
     window = arcade.Window(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
