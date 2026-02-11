@@ -26,6 +26,7 @@ WINDOW_WIDTH = int(config.get("WINDOW_WIDTH", 800))
 WINDOW_HEIGHT = int(config.get("WINDOW_HEIGHT", 600))
 TILE_SIZE = int(config.get("TILE_SIZE", 32))
 WINDOW_TITLE = config.get("WINDOW_TITLE", "pacman")
+SCORES_PATH = config.get("scores_path", "scores.json")
 
 COIN_SOUND = load_sound(config.get("coin_sound1", ""))
 APPLE_SOUND = load_sound(config.get("apple_sound1", ""))
@@ -290,7 +291,7 @@ class PacmanGame(arcade.View):
         self.exit = False
         self.paused_velocity = (0, 0)
         self.show_credits = False
-        self.scores = []
+        self.scores = load_scores(SCORES_PATH)
         self.scores_scroll = 0
         self.scroll_dir = 0
         self.scroll_speed = 0.0
@@ -324,7 +325,6 @@ class PacmanGame(arcade.View):
         self.speed_up = False
         self.speed_up_timer = 0
         self.white_coin_timer = 5 * 60
-        self.scores = []
         self.scores_scroll = 0
         self.scroll_dir = 0
         self.scroll_speed = 0.0
@@ -864,6 +864,10 @@ class PacmanGame(arcade.View):
             else:
                 # все уровни пройдены
                 self.win = True
+                if not self.name_saved:
+                    self.name_entry_active = True
+                    self.name_input = ""
+                    self.scores = load_scores(SCORES_PATH)
         if self.exit:
             #put sound of pause here!!!
             pass
