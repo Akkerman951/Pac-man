@@ -841,7 +841,7 @@ class PacmanGame(arcade.View):
                 dest = random.choice(other_portals)
                 self.player.center_x = dest.center_x
                 self.player.center_y = dest.center_y
-                arcade.play_sound(PORTAL_SOUND)
+                arcade.play_sound(PORTAL_SOUND,5,0,0,10)
                 self.player.teleport_cooldown = 5 * 60
 
         # ------------------ Walls ------------------
@@ -875,7 +875,7 @@ class PacmanGame(arcade.View):
         # -----------------Keys and Gates -------------------
         key_hits = arcade.check_for_collision_with_list(self.player, self.key_list)
         if key_hits:
-            arcade.play_sound(PILL_SOUND,5)
+            arcade.play_sound(PILL_SOUND,5,0,0,10)
             self.key.remove_from_sprite_lists()
             self.player.is_have_key = True
         gate_hits = arcade.check_for_collision_with_list(self.player, self.gate_list)
