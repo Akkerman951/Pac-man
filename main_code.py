@@ -396,7 +396,7 @@ class PacmanGame(arcade.View):
         arcade.draw_text(f"Score: {self.player.score}", 10, WINDOW_HEIGHT - 45, arcade.color.WHITE, 16)
         arcade.draw_text(f"Lives: {self.lives}", 10, WINDOW_HEIGHT - 65, arcade.color.WHITE, 16)
         arcade.draw_text(f"Time: {round(self.counter)} s", 10, WINDOW_HEIGHT - 25 , arcade.color.WHITE, 16)
-
+#
         def draw_text_block(text_items, pad=12,border=6,
                             inner_color=arcade.color.INDIGO,
                             outer_color=arcade.color.IMPERIAL_PURPLE):
