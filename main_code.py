@@ -1,16 +1,38 @@
-import json
+# Исправленный pacman (минимальные изменения, чтобы всё работало)
 import random
+import os
+import json
 import arcade
 from arcade import check_for_collision_with_list, load_sound, load_texture, play_sound
-import os
+
 # ------------------ HELPERS ------------------
+def safe_load_sound(path):
+    if not path:
+        return None
+    try:
+        return load_sound(path)
+    except Exception:
+        return None
+
+def safe_load_texture(path):
+    if not path:
+        return None
+    try:
+        return load_texture(path)
+    except Exception:
+        return None
+
 def load_config(filename):
     config = {}
-    with open(filename, "r") as file:
+    if not os.path.isfile(filename):
+        return config
+    with open(filename, "r", encoding="utf-8") as file:
         for line in file:
             if not line.strip() or line.strip().startswith("#"):
                 continue
-            key, value = line.strip().split("=")
+            if "=" not in line:
+                continue
+            key, value = line.strip().split("=", 1)
             key = key.strip()
             value = value.strip()
             if value.isdigit():
@@ -18,6 +40,43 @@ def load_config(filename):
             else:
                 config[key] = value
     return config
+
+def load_levels(folder="levels"):
+    levels = []
+    if not os.path.isdir(folder):
+        raise FileNotFoundError(f"Folder '{folder}' not found.")
+    files = sorted(f for f in os.listdir(folder) if f.endswith(".txt"))
+    for fname in files:
+        with open(os.path.join(folder, fname), "r", encoding="utf-8") as f:
+            level = [line.rstrip("\n") for line in f if line.rstrip("\n") != ""]
+            levels.append(level)
+    return levels
+
+def load_scores(path):
+    try:
+        with open(path, "r", encoding="utf-8") as file:
+            data = json.load(file)
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(data, list):
+        return []
+    scores = []
+    for item in data:
+        if isinstance(item, dict) and "name" in item and "time" in item:
+            try:
+                scores.append({"name": str(item["name"]), "time": float(item["time"])})
+            except Exception:
+                pass
+    return scores
+
+def save_scores(path, scores):
+    try:
+        with open(path, "w", encoding="utf-8") as file:
+            json.dump(scores, file, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
 
 # ------------------ CONFIG ------------------
 config = load_config("config.txt")
@@ -28,48 +87,62 @@ TILE_SIZE = int(config.get("TILE_SIZE", 32))
 WINDOW_TITLE = config.get("WINDOW_TITLE", "pacman")
 SCORES_PATH = config.get("scores_path", "scores.json")
 
-COIN_SOUND = load_sound(config.get("coin_sound1", ""))
-APPLE_SOUND = load_sound(config.get("apple_sound1", ""))
-PORTAL_SOUND = load_sound(config.get("portal_sound1", ""))
-GHOST_SOUND = load_sound(config.get("ghost_sound1", ""))
-WIN_SOUND = load_sound(config.get("win_sound1", ""))
-EAT_GHOST_SOUND = load_sound(config.get("eat_ghost_sound1", ""))
-PILL_SOUND = load_sound(config.get("pill_sound1", ""))
-DEAF_SOUND = load_sound(config.get("def_sound1"))
-LOGO_SOUND = load_sound(config.get("logo_sound1"))
-POWER_END_SOUND = load_sound(config.get("power_end_sound1"))
-PLAY_SOUND = load_sound(config.get("play_sound1"))
-PAUSE_SOUND = load_sound(config.get("pause_sound1"))
-DOR_SOUND = load_sound(config.get("dor_sound1"))
+# safe loads
+COIN_SOUND = safe_load_sound(config.get("coin_sound1", ""))
+APPLE_SOUND = safe_load_sound(config.get("apple_sound1", ""))
+PORTAL_SOUND = safe_load_sound(config.get("portal_sound1", ""))
+GHOST_SOUND = safe_load_sound(config.get("ghost_sound1", ""))
+WIN_SOUND = safe_load_sound(config.get("win_sound1", ""))
+EAT_GHOST_SOUND = safe_load_sound(config.get("eat_ghost_sound1", ""))
+PILL_SOUND = safe_load_sound(config.get("pill_sound1", ""))
+DEAF_SOUND = safe_load_sound(config.get("def_sound1", ""))
+LOGO_SOUND = safe_load_sound(config.get("logo_sound1", ""))
+POWER_END_SOUND = safe_load_sound(config.get("power_end_sound1", ""))
+PLAY_SOUND = safe_load_sound(config.get("play_sound1", ""))
+PAUSE_SOUND = safe_load_sound(config.get("pause_sound1", ""))
+DOR_SOUND = safe_load_sound(config.get("dor_sound1", ""))
 
-RED_GHOST_PNG_R = load_texture(config.get("red_ghost_png1.r", ""))
-RED_GHOST_PNG_L = load_texture(config.get("red_ghost_png1.l", ""))
-RED_GHOST_PNG_U = load_texture(config.get("red_ghost_png1.u", ""))
-RED_GHOST_PNG_D = load_texture(config.get("red_ghost_png1.d", ""))
-RED_GHOST_PNG_R2 = load_texture(config.get("red_ghost_png2.r", ""))
-RED_GHOST_PNG_L2 = load_texture(config.get("red_ghost_png2.l", ""))
-RED_GHOST_PNG_U2 = load_texture(config.get("red_ghost_png2.u", ""))
-RED_GHOST_PNG_D2 = load_texture(config.get("red_ghost_png2.d", ""))
-BLUE_PNG = load_texture(config.get("blue_ghost_png1"))
-GREY_PNG = load_texture(config.get("greu_ghost_png1"))
+# textures (safe)
+RED_GHOST_PNG_R = safe_load_texture(config.get("red_ghost_png1.r", ""))
+RED_GHOST_PNG_L = safe_load_texture(config.get("red_ghost_png1.l", ""))
+RED_GHOST_PNG_U = safe_load_texture(config.get("red_ghost_png1.u", ""))
+RED_GHOST_PNG_D = safe_load_texture(config.get("red_ghost_png1.d", ""))
+RED_GHOST_PNG_R2 = safe_load_texture(config.get("red_ghost_png2.r", ""))
+RED_GHOST_PNG_L2 = safe_load_texture(config.get("red_ghost_png2.l", ""))
+RED_GHOST_PNG_U2 = safe_load_texture(config.get("red_ghost_png2.u", ""))
+RED_GHOST_PNG_D2 = safe_load_texture(config.get("red_ghost_png2.d", ""))
+BLUE_PNG = safe_load_texture(config.get("blue_ghost_png1", ""))
+GREY_PNG = safe_load_texture(config.get("greu_ghost_png1", ""))
 
-PORTAL_PNG1 = load_texture(config.get("portal_png1"))
-APPLE_PNG = load_texture(config.get("apple_png1"))
-PILL_PNG =  load_texture(config.get("pill_blue_png1", ""))
-SPLASH_PNG = load_texture("texture/starting_screen1.jpg.jpeg")
-PACMEN_UP_PNG = load_texture(config.get("pacmen_u_png1", ""))
-PACMEN_DOWN_PNG = load_texture(config.get("pacmen_d_png1", ""))
-PACMEN_RAIGHT_PNG = load_texture(config.get("pacmen_r_png1", ""))
-PACMEN_LEFT_PNG = load_texture(config.get("pacmen_l_png1", ""))
-KEY_PNG = load_texture(config.get("key_png1", ""))
-GATE_PNG = load_texture(config.get("gate_png1"))
+PORTAL_PNG1 = safe_load_texture(config.get("portal_png1", ""))
+APPLE_PNG = safe_load_texture(config.get("apple_png1", ""))
+PILL_PNG = safe_load_texture(config.get("pill_blue_png1", ""))
+SPLASH_PNG = safe_load_texture("texture/starting_screen1.jpg.jpeg")
+PACMEN_UP_PNG = safe_load_texture(config.get("pacmen_u_png1", ""))
+PACMEN_DOWN_PNG = safe_load_texture(config.get("pacmen_d_png1", ""))
+PACMEN_RAIGHT_PNG = safe_load_texture(config.get("pacmen_r_png1", ""))
+PACMEN_LEFT_PNG = safe_load_texture(config.get("pacmen_l_png1", ""))
+KEY_PNG = safe_load_texture(config.get("key_png1", ""))
+GATE_PNG = safe_load_texture(config.get("gate_png1", ""))
 
-# сгруппированные фреймы призрака (по направлению)
-RED_GHOST_FRAMES_R = [RED_GHOST_PNG_R, RED_GHOST_PNG_R2]
-RED_GHOST_FRAMES_L = [RED_GHOST_PNG_L, RED_GHOST_PNG_L2]
-RED_GHOST_FRAMES_U = [RED_GHOST_PNG_U, RED_GHOST_PNG_U2]
-RED_GHOST_FRAMES_D = [RED_GHOST_PNG_D, RED_GHOST_PNG_D2]
+# fallback simple textures (if none provided)
+FALLBACK_RED = arcade.make_circle_texture(TILE_SIZE, arcade.color.RED)
+FALLBACK_BLUE = arcade.make_circle_texture(TILE_SIZE, arcade.color.BLUE)
+FALLBACK_GREY = arcade.make_circle_texture(TILE_SIZE, arcade.color.LIGHT_GRAY)
 
+# ensure frames arrays exist and replace None with fallback
+def _frame_or_fallback(t):
+    return t if t is not None else FALLBACK_RED
+
+RED_GHOST_FRAMES_R = [RED_GHOST_PNG_R or FALLBACK_RED, RED_GHOST_PNG_R2 or FALLBACK_RED]
+RED_GHOST_FRAMES_L = [RED_GHOST_PNG_L or FALLBACK_RED, RED_GHOST_PNG_L2 or FALLBACK_RED]
+RED_GHOST_FRAMES_U = [RED_GHOST_PNG_U or FALLBACK_RED, RED_GHOST_PNG_U2 or FALLBACK_RED]
+RED_GHOST_FRAMES_D = [RED_GHOST_PNG_D or FALLBACK_RED, RED_GHOST_PNG_D2 or FALLBACK_RED]
+
+BLUE_PNG = BLUE_PNG or FALLBACK_BLUE
+GREY_PNG = GREY_PNG or FALLBACK_GREY
+
+# Leaderboard & UI constants (keep as in your merged code)
 LEADERBOARD_PANEL_LEFT = 5
 LEADERBOARD_PANEL_WIDTH = 255
 LEADERBOARD_PANEL_BOTTOM = 10
@@ -87,40 +160,6 @@ LEADERBOARD_VISIBLE_ROWS = 10
 NAME_MAX_LEN = 18
 GHOST_ANIM_INTERVAL = 0.12
 
-
-def load_levels(folder="levels"):
-    levels = []
-    if not os.path.isdir(folder):
-        raise FileNotFoundError(f"Folder '{folder}' not found.")
-    files = sorted(f for f in os.listdir(folder) if f.endswith(".txt"))
-    for fname in files:
-        with open(os.path.join(folder, fname), "r", encoding="utf-8") as f:
-            # убираем пустые строки, сохраняем порядок строк
-            level = [line.rstrip("\n") for line in f if line.rstrip("\n") != ""]
-            levels.append(level)
-    return levels
-
-def load_scores(path):
-    try:
-        with open(path, "r") as file:
-            data = json.load(file)
-    except FileNotFoundError:
-        return []
-    except json.JSONDecodeError:
-        return []
-    if not isinstance(data, list):
-        return []
-    scores = []
-    for item in data:
-        if isinstance(item, dict) and "name" in item and "time" in item:
-            scores.append({"name": str(item["name"]), "time": float(item["time"])})
-    return scores
-
-def save_scores(path, scores):
-    with open(path, "w") as file:
-        json.dump(scores, file, ensure_ascii=True, indent=2)
-
-
 # ------------------ START SCREEN ------------------
 class SplashScreen(arcade.View):
     def __init__(self):
@@ -131,7 +170,11 @@ class SplashScreen(arcade.View):
         self.max_time = 12 * 60
 
         self.background_sprite = arcade.Sprite()
-        self.background_sprite.texture = SPLASH_PNG
+        if SPLASH_PNG is not None:
+            self.background_sprite.texture = SPLASH_PNG
+        else:
+            # fallback plain color as a texture
+            self.background_sprite.texture = arcade.make_soft_square_texture(WINDOW_WIDTH, arcade.color.DARK_SLATE_GRAY, 255, 255)
         self.background_sprite.center_x = WINDOW_WIDTH / 2
         self.background_sprite.center_y = WINDOW_HEIGHT / 2
         self.background_sprite.width = WINDOW_WIDTH
@@ -148,7 +191,8 @@ class SplashScreen(arcade.View):
         self.timer += 1
         if self.alpha < 255:
             self.alpha = min(255, self.alpha + self.fade_speed)
-            self.background_sprite.alpha = self.alpha
+            # sprite has alpha attribute
+            self.background_sprite.alpha = int(self.alpha)
         if self.timer >= self.max_time:
             self.start_game()
 
@@ -164,7 +208,7 @@ class SplashScreen(arcade.View):
 # ------------------ SPRITES ------------------
 class Pacman(arcade.Sprite):
     def __init__(self):
-        texture = PACMEN_UP_PNG
+        texture = PACMEN_UP_PNG if PACMEN_UP_PNG is not None else arcade.make_circle_texture(TILE_SIZE, arcade.color.YELLOW)
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
@@ -190,27 +234,26 @@ class Pacman(arcade.Sprite):
 
 class Teleport(arcade.Sprite):
     def __init__(self):
-        texture = PORTAL_PNG1
+        texture = PORTAL_PNG1 if PORTAL_PNG1 is not None else arcade.make_circle_texture(TILE_SIZE, arcade.color.AZURE)
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
 
 class Ghost(arcade.Sprite):
     def __init__(self):
-        texture = RED_GHOST_PNG_R
-        super().__init__(texture)
+        initial = RED_GHOST_PNG_R or FALLBACK_RED
+        super().__init__(initial)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
-        self.change_x = random.choice([-1, 1]) * 4
+        base_speed = 2
+        self.change_x = random.choice([-1, 1]) * base_speed
         self.change_y = 0
         self.anim_timer = 0.0
         self.anim_frame = 0
         self.last_dir = "R"
 
     def update(self, delta_time: float = 1 / 60, *args, **kwargs):
-        self.move()
-
-    def move(self):
+        # move
         self.center_x += self.change_x
         self.center_y += self.change_y
 
@@ -243,9 +286,11 @@ class Ghost(arcade.Sprite):
 
 class Coin(arcade.Sprite):
     def __init__(self):
-        self.normal_texture = arcade.make_circle_texture(16, arcade.color.YELLOW)
-        self.power_texture = arcade.make_circle_texture(16, arcade.color.PINK)
-        super().__init__(self.normal_texture)
+        normal = arcade.make_circle_texture(16, arcade.color.YELLOW)
+        power = arcade.make_circle_texture(16, arcade.color.PINK)
+        super().__init__(normal)
+        self.normal_texture = normal
+        self.power_texture = power
         self.value = 5
 
     def set_power(self, power: bool):
@@ -267,7 +312,7 @@ class Wall(arcade.Sprite):
 
 class Apple(arcade.Sprite):
     def __init__(self):
-        texture = APPLE_PNG
+        texture = APPLE_PNG if APPLE_PNG is not None else arcade.make_circle_texture(TILE_SIZE, arcade.color.ORANGE)
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
@@ -275,21 +320,21 @@ class Apple(arcade.Sprite):
 
 class Pill(arcade.Sprite):
     def __init__(self):
-        texture = PILL_PNG
+        texture = PILL_PNG if PILL_PNG is not None else arcade.make_circle_texture(TILE_SIZE, arcade.color.PURPLE)
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
 
 class Key(arcade.Sprite):
     def __init__(self):
-        texture = KEY_PNG
+        texture = KEY_PNG if KEY_PNG is not None else arcade.make_circle_texture(TILE_SIZE, arcade.color.GOLD)
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
 
 class Gate(arcade.Sprite):
     def __init__(self):
-        texture = GATE_PNG
+        texture = GATE_PNG if GATE_PNG is not None else arcade.make_soft_square_texture(TILE_SIZE, arcade.color.DARK_GRAY, 255, 255)
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
@@ -308,8 +353,8 @@ class PacmanGame(arcade.View):
         self.white_coin_list = arcade.SpriteList()
         self.gate_list = arcade.SpriteList()
         self.key_list = arcade.SpriteList()
-        self.levels = load_levels()  # загрузит level1.txt, level2.txt, level3.txt в этом порядке
-        self.current_level = 0  # стартует с level1.txt (большая карта)
+        self.levels = load_levels()
+        self.current_level = 0
 
         self.player = None
         self.game_over = False
@@ -319,7 +364,7 @@ class PacmanGame(arcade.View):
         self.speed_up = False
         self.speed_up_timer = 0
         self.white_coin_timer = 5 * 60
-        self.counter = 0
+        self.counter = 0.0
         self.exit = False
         self.paused_velocity = (0, 0)
         self.show_credits = False
@@ -336,6 +381,12 @@ class PacmanGame(arcade.View):
         self.score = 0
         self.lives = 3
         self.max_score = 0
+
+        # offsets (set in setup)
+        self.offset_x = 0
+        self.offset_y = 0
+        self.map_width = 0
+        self.map_height = 0
 
     def setup(self):
         self.wall_list = arcade.SpriteList()
@@ -364,26 +415,31 @@ class PacmanGame(arcade.View):
         self.name_entry_active = False
         self.name_saved = False
 
-        level = self.levels[self.current_level]  # <-- новая строка
+        level = self.levels[self.current_level]
         rows = len(level)
-        for row_idx, row in enumerate(level):
+        cols = max(len(r) for r in level)
 
+        # sizes and center offsets
+        self.map_width = cols * TILE_SIZE
+        self.map_height = rows * TILE_SIZE
+        self.offset_x = (WINDOW_WIDTH - self.map_width) // 2
+        self.offset_y = (WINDOW_HEIGHT - self.map_height) // 2
+
+        for row_idx, row in enumerate(level):
             for col_idx, cell in enumerate(row):
-                x = col_idx * TILE_SIZE + TILE_SIZE / 2
-                y = (rows - row_idx - 1) * TILE_SIZE + TILE_SIZE / 2
+                x = col_idx * TILE_SIZE + TILE_SIZE / 2 + self.offset_x
+                y = (rows - row_idx - 1) * TILE_SIZE + TILE_SIZE / 2 + self.offset_y
 
                 if cell == "W":
                     wall = Wall()
                     wall.center_x = x
                     wall.center_y = y
                     self.wall_list.append(wall)
-
                 elif cell == ".":
                     coin = Coin()
                     coin.center_x = x
                     coin.center_y = y
                     self.coin_list.append(coin)
-
                 elif cell == "G":
                     for i in range(4):
                         ghost = Ghost()
@@ -394,13 +450,11 @@ class PacmanGame(arcade.View):
                     apple.center_x = x
                     apple.center_y = y
                     self.apple_list.append(apple)
-
                 elif cell == "T":
                     teleport = Teleport()
                     teleport.center_x = x
                     teleport.center_y = y
                     self.teleport_list.append(teleport)
-
                 elif cell == "P":
                     self.player = Pacman()
                     self.player.center_x = x
@@ -408,18 +462,16 @@ class PacmanGame(arcade.View):
                     self.start_x = x
                     self.start_y = y
                     self.player_list.append(self.player)
-
                 elif cell == "K":
-                    self.key = Key()
-                    self.key.center_x = x
-                    self.key.center_y = y
-                    self.key_list.append(self.key)
-
+                    key = Key()
+                    key.center_x = x
+                    key.center_y = y
+                    self.key_list.append(key)
                 elif cell == "E":
-                    self.gate = Gate()
-                    self.gate.center_x = x
-                    self.gate.center_y = y
-                    self.gate_list.append(self.gate)
+                    gate = Gate()
+                    gate.center_x = x
+                    gate.center_y = y
+                    self.gate_list.append(gate)
                 elif cell == "A":
                     apple = Apple()
                     apple.center_x = x
@@ -436,26 +488,19 @@ class PacmanGame(arcade.View):
     def spawn_white_coin(self):
         if len(self.white_coin_list) > 0:
             return
-
-        # если уровни не загружены — ничего не делаем
         if not hasattr(self, "levels") or not self.levels:
             return
 
-        # текущая карта (используем именно её, а не глобальную LEVEL_MAP)
         level = self.levels[self.current_level]
         rows = len(level)
         cols = max(len(r) for r in level)
 
         free_positions = []
-
         for row_idx, row in enumerate(level):
             for col_idx, cell in enumerate(row):
-                # разрешаем спавн на '.' и на 'A' (как было раньше)
                 if cell == "." or cell == "A":
-                    x = col_idx * TILE_SIZE + TILE_SIZE / 2
-                    y = (rows - row_idx - 1) * TILE_SIZE + TILE_SIZE / 2
-
-                    # проверяем, что на этой позиции нет уже монеты/яблока/белой монеты
+                    x = col_idx * TILE_SIZE + TILE_SIZE / 2 + self.offset_x
+                    y = (rows - row_idx - 1) * TILE_SIZE + TILE_SIZE / 2 + self.offset_y
                     collides = any(
                         sprite.center_x == x and sprite.center_y == y
                         for sprite_list in (self.coin_list, self.apple_list, self.white_coin_list)
@@ -544,7 +589,11 @@ class PacmanGame(arcade.View):
 
             stats_x = panel_right + 10
 
-        arcade.draw_text(f"Score: {self.player.score}",stats_x,WINDOW_HEIGHT - 45,arcade.color.WHITE,16)
+        # HUD
+        if self.player:
+            arcade.draw_text(f"Score: {self.player.score}",stats_x,WINDOW_HEIGHT - 45,arcade.color.WHITE,16)
+        else:
+            arcade.draw_text(f"Score: 0",stats_x,WINDOW_HEIGHT - 45,arcade.color.WHITE,16)
         arcade.draw_text(f"Lives: {self.lives}",stats_x,WINDOW_HEIGHT - 65,arcade.color.WHITE,16)
         arcade.draw_text(f"Time: {round(self.counter)} s",stats_x,WINDOW_HEIGHT - 25,arcade.color.WHITE,16)
 
@@ -647,7 +696,8 @@ class PacmanGame(arcade.View):
 
         if (self.game_over or self.win or self.exit) and key == arcade.key.C:
             self.show_credits = not self.show_credits
-            arcade.play_sound(PLAY_SOUND,2)
+            if PLAY_SOUND:
+                play_sound(PLAY_SOUND)
             return
         if (self.game_over or self.win or self.exit) and key in (arcade.key.W,arcade.key.UP):
             self.scroll_dir = -1
@@ -661,40 +711,48 @@ class PacmanGame(arcade.View):
             if key == arcade.key.ESCAPE:
                 self.window.close()
             elif key == arcade.key.SPACE:
-                arcade.play_sound(PLAY_SOUND,5)
+                if PLAY_SOUND:
+                    play_sound(PLAY_SOUND)
                 self.exit = False
                 if self.player:
                     self.player.change_x,self.player.change_y = self.paused_velocity
             return
 
+        if not self.player:
+            return
+
         if key in (arcade.key.UP, arcade.key.W):
-            self.player.texture = PACMEN_UP_PNG
+            if PACMEN_UP_PNG is not None:
+                self.player.texture = PACMEN_UP_PNG
             self.player.height = TILE_SIZE
             self.player.width = TILE_SIZE
             self.player.change_x = 0
             self.player.change_y = self.player.speed
 
-
         elif key in (arcade.key.DOWN, arcade.key.S):
-            self.player.texture = PACMEN_DOWN_PNG
+            if PACMEN_DOWN_PNG is not None:
+                self.player.texture = PACMEN_DOWN_PNG
             self.player.width = TILE_SIZE
             self.player.height = TILE_SIZE
             self.player.change_x = 0
             self.player.change_y = -self.player.speed
         elif key in (arcade.key.RIGHT, arcade.key.D):
-            self.player.texture = PACMEN_RAIGHT_PNG
+            if PACMEN_RAIGHT_PNG is not None:
+                self.player.texture = PACMEN_RAIGHT_PNG
             self.player.width = TILE_SIZE
             self.player.height = TILE_SIZE
             self.player.change_x = self.player.speed
             self.player.change_y = 0
         elif key in (arcade.key.LEFT, arcade.key.A):
-            self.player.texture = PACMEN_LEFT_PNG
+            if PACMEN_LEFT_PNG is not None:
+                self.player.texture = PACMEN_LEFT_PNG
             self.player.width = TILE_SIZE
             self.player.height = TILE_SIZE
             self.player.change_x = -self.player.speed
             self.player.change_y = 0
         elif key == arcade.key.ESCAPE:
-            arcade.play_sound(PAUSE_SOUND,5)
+            if PAUSE_SOUND:
+                play_sound(PAUSE_SOUND)
             self.exit = True
             if self.player:
                 self.paused_velocity = (self.player.change_x, self.player.change_y)
@@ -719,15 +777,21 @@ class PacmanGame(arcade.View):
             self.scores_scroll = max(0, min(self.scores_scroll - scroll_y * LEADERBOARD_SCROLL_STEP, max_scroll))
 
     def on_update(self, delta_time):
+        # if finished or paused -> update leaderboard scroll only
         if self.game_over or self.win or self.exit:
             self.update_scores_scroll(delta_time)
             return
+
         if self.player and self.player.teleport_cooldown > 0:
             self.player.teleport_cooldown -= 1
-        self.counter += 1 / 60
-        self.player.move()
 
-        # ------------------ Pill ------------------
+        # update time using real delta_time
+        self.counter += delta_time
+
+        if self.player:
+            self.player.move()
+
+        # PILLS
         pill_hit = arcade.check_for_collision_with_list(self.player, self.pill_list)
         if pill_hit:
             self.speed_up_timer = 5 * 60
@@ -735,7 +799,8 @@ class PacmanGame(arcade.View):
             self.player.speed = self.player.speed_basic + self.player.speed_grader
             for pill in pill_hit:
                 pill.remove_from_sprite_lists()
-                arcade.play_sound(PILL_SOUND)
+                if PILL_SOUND:
+                    play_sound(PILL_SOUND)
 
         if self.speed_up:
             self.speed_up_timer -= 1
@@ -743,19 +808,22 @@ class PacmanGame(arcade.View):
                 self.speed_up = False
                 self.player.speed = self.player.speed_basic
 
-        # ------------------ Ghost collision ------------------
+        # GHOST COLLISIONS
         ghosts_hit = arcade.check_for_collision_with_list(self.player, self.ghost_list)
         if ghosts_hit:
             if self.power_mode:
                 for ghost in ghosts_hit:
                     ghost.remove_from_sprite_lists()
-                    arcade.play_sound(EAT_GHOST_SOUND, 10)
+                    if EAT_GHOST_SOUND:
+                        play_sound(EAT_GHOST_SOUND)
                     self.player.score += 250
             else:
                 self.lives -= 1
-                arcade.play_sound(GHOST_SOUND, 20)
+                if GHOST_SOUND:
+                    play_sound(GHOST_SOUND)
                 if self.lives <= 0:
-                    arcade.play_sound(DEAF_SOUND, 5)
+                    if DEAF_SOUND:
+                        play_sound(DEAF_SOUND)
                     self.game_over = True
                 else:
                     self.player.center_x = self.start_x
@@ -763,32 +831,46 @@ class PacmanGame(arcade.View):
                     self.player.change_x = 0
                     self.player.change_y = 0
 
-        # ------------------ Move ghosts ------------------
-        for ghost in self.ghost_list:
-            matr_x = ghost.center_x // TILE_SIZE
-            matr_y = ghost.center_y // TILE_SIZE
+        # MOVE GHOSTS (with robust texture switching & animation)
+        for ghost in list(self.ghost_list):
+            old_x = ghost.center_x
+            old_y = ghost.center_y
 
-            ghost.update(delta_time)
-            if arcade.check_for_collision_with_list(ghost, self.wall_list):
-                ghost.change_x, ghost.change_y = random.choice([(2,0),(-2,0),(0,2),(0,-2)])
-                ghost.center_x = matr_x * TILE_SIZE + 16
-                ghost.center_y = matr_y * TILE_SIZE + 16
-
+            # advance animation timer
             ghost.advance_animation(delta_time)
-            if self.power_mode:
-                if self.power_timer <= 2 * 60:
-                    ghost.texture = BLUE_PNG if ghost.anim_frame == 0 else GREY_PNG
-                else:
-                    ghost.texture = BLUE_PNG
-            else:
-                ghost.texture = ghost.get_red_frames()[ghost.anim_frame]
 
-        # ------------------ Coins ------------------
+            # set texture for power mode OR normal frames
+            if self.power_mode:
+                # make sure we assign a valid texture object
+                ghost.texture = BLUE_PNG or GREY_PNG or FALLBACK_BLUE
+            else:
+                frames = ghost.get_red_frames()
+                # frames should be a pair of textures; choose based on anim_frame
+                if frames and len(frames) > 0:
+                    idx = ghost.anim_frame % len(frames)
+                    ghost.texture = frames[idx] or FALLBACK_RED
+                else:
+                    ghost.texture = FALLBACK_RED
+
+            # move & collision: use ghost.update() which moves according to change_x/change_y
+            ghost.update()
+
+            if arcade.check_for_collision_with_list(ghost, self.wall_list):
+                # rollback
+                ghost.center_x = old_x
+                ghost.center_y = old_y
+                # choose a new direction with the same magnitude as before (to avoid speed mismatch)
+                speed_val = abs(ghost.change_x) if ghost.change_x != 0 else (abs(ghost.change_y) if ghost.change_y != 0 else 2)
+                possible = [(speed_val,0),(-speed_val,0),(0,speed_val),(0,-speed_val)]
+                ghost.change_x, ghost.change_y = random.choice(possible)
+
+        # COINS
         coins_hit = arcade.check_for_collision_with_list(self.player, self.coin_list)
         for coin in coins_hit:
             self.player.score += coin.value
             coin.remove_from_sprite_lists()
-            arcade.play_sound(COIN_SOUND)
+            if COIN_SOUND:
+                play_sound(COIN_SOUND)
 
         blink_power = False
         if self.power_mode and self.power_timer <= 2 * 60:
@@ -797,51 +879,63 @@ class PacmanGame(arcade.View):
         for coin in self.coin_list:
             if self.power_mode and self.power_timer <= 2 * 60:
                 coin.set_power(blink_power)
-                #put here sound of 2 last sec of power mode!!!
             else:
                 coin.set_power(self.power_mode)
 
-        # ------------------ White Coin ------------------
+        # WHITE COIN
         self.white_coin_timer -= 1
         if self.white_coin_timer <= 0:
             self.spawn_white_coin()
             self.white_coin_timer = 5 * 60
 
-        for coin in self.white_coin_list:
+        for coin in list(self.white_coin_list):
             coin.timer += 1
             if coin.timer >= coin.duration:
                 coin.remove_from_sprite_lists()
 
-        white_hits = arcade.check_for_collision_with_list(self.player,self.white_coin_list)
+        white_hits = arcade.check_for_collision_with_list(self.player, self.white_coin_list)
         for coin in white_hits:
             coin.remove_from_sprite_lists()
             self.white_coin_speed_timer = 5 * 60
             for ghost in self.ghost_list:
+                # double movement vector (keep direction)
+                if ghost.change_x > 0:
+                    ghost.change_x = abs(ghost.change_x) * 2
+                elif ghost.change_x < 0:
+                    ghost.change_x = -abs(ghost.change_x) * 2
+                if ghost.change_y > 0:
+                    ghost.change_y = abs(ghost.change_y) * 2
+                elif ghost.change_y < 0:
+                    ghost.change_y = -abs(ghost.change_y) * 2
 
-                ghost.change_x *= 2
-                ghost.change_y *= 2
-
-        if hasattr(self,"white_coin_speed_timer"):
+        if hasattr(self, "white_coin_speed_timer"):
             self.white_coin_speed_timer -= 1
             if self.white_coin_speed_timer <= 0:
                 for ghost in self.ghost_list:
-
-                    ghost.change_x = (ghost.change_x // abs(ghost.change_x) if ghost.change_x != 0 else 0) * 4
-                    ghost.change_y = (ghost.change_y // abs(ghost.change_y) if ghost.change_y != 0 else 0) * 4
+                    # normalize back to base 4 pixels if needed
+                    if ghost.change_x > 0:
+                        ghost.change_x = 2
+                    elif ghost.change_x < 0:
+                        ghost.change_x = -2
+                    if ghost.change_y > 0:
+                        ghost.change_y = 2
+                    elif ghost.change_y < 0:
+                        ghost.change_y = -2
                 del self.white_coin_speed_timer
 
-        # ------------------ Power mode ------------------
+        # POWER MODE (apples)
         apples_hit = arcade.check_for_collision_with_list(self.player, self.apple_list)
         if apples_hit:
             self.power_mode = True
             self.power_timer = 10 * 60
-            arcade.play_sound(APPLE_SOUND, 10,0,0,10)
+            if APPLE_SOUND:
+                play_sound(APPLE_SOUND)
 
         if self.power_mode:
             self.power_timer -= 1
             if self.power_timer == 2 * 60:
-                arcade.play_sound(POWER_END_SOUND,5)
-
+                if POWER_END_SOUND:
+                    play_sound(POWER_END_SOUND)
             if self.power_timer <= 0:
                 self.power_mode = False
 
@@ -849,7 +943,7 @@ class PacmanGame(arcade.View):
             self.player.score += apple.value
             apple.remove_from_sprite_lists()
 
-        # ------------------ Teleports ------------------
+        # TELEPORTS
         tp_hits = arcade.check_for_collision_with_list(self.player, self.teleport_list)
         if tp_hits and self.player.teleport_cooldown == 0:
             current_portal = tp_hits[0]
@@ -858,60 +952,65 @@ class PacmanGame(arcade.View):
                 dest = random.choice(other_portals)
                 self.player.center_x = dest.center_x
                 self.player.center_y = dest.center_y
-                arcade.play_sound(PORTAL_SOUND,5,0,0,10)
+                if PORTAL_SOUND:
+                    play_sound(PORTAL_SOUND)
                 self.player.teleport_cooldown = 5 * 60
 
-        # ------------------ Walls ------------------
-        mat_x = self.player.center_x // TILE_SIZE
-        mat_y = self.player.center_y // TILE_SIZE
+        # WALL collision: snap using offsets
+        mat_x = int((self.player.center_x - self.offset_x) // TILE_SIZE)
+        mat_y = int((self.player.center_y - self.offset_y) // TILE_SIZE)
         if arcade.check_for_collision_with_list(self.player, self.wall_list):
-            self.player.center_x = mat_x * TILE_SIZE + TILE_SIZE / 2
-            self.player.center_y = mat_y * TILE_SIZE + TILE_SIZE / 2
+            self.player.center_x = mat_x * TILE_SIZE + TILE_SIZE / 2 + self.offset_x
+            self.player.center_y = mat_y * TILE_SIZE + TILE_SIZE / 2 + self.offset_y
+            # stop movement to avoid tunnelling inside wall
+            self.player.change_x = 0
+            self.player.change_y = 0
 
-        # Надёжная проверка завершения уровня:
-        # считаем уровень пройденным, когда не осталось обычных монет и яблок на поле.
+        # LEVEL COMPLETE
         if len(self.coin_list) == 0 and len(self.apple_list) == 0:
-            # увеличиваем номер уровня и загружаем следующий (если он есть)
             self.current_level += 1
             if self.current_level < len(self.levels):
-                # при переходе на новый уровень логично обнулить счёт (по желанию)
-                # self.player.score = 0
                 self.setup()
             else:
-                # все уровни пройдены
-                arcade.play_sound(WIN_SOUND, 20)
+                if WIN_SOUND:
+                    play_sound(WIN_SOUND)
                 self.win = True
                 if not self.name_saved:
                     self.name_entry_active = True
                     self.name_input = ""
                     self.scores = load_scores(SCORES_PATH)
-        if self.exit:
-            #put sound of pause here!!!
-            pass
 
-        # -----------------Keys and Gates -------------------
+        # KEYS & GATES
         key_hits = arcade.check_for_collision_with_list(self.player, self.key_list)
         if key_hits:
-            arcade.play_sound(PILL_SOUND,5,0,0,10)
-            self.key.remove_from_sprite_lists()
+            if PILL_SOUND:
+                play_sound(PILL_SOUND)
+            for k in key_hits:
+                k.remove_from_sprite_lists()
             self.player.is_have_key = True
+
         gate_hits = arcade.check_for_collision_with_list(self.player, self.gate_list)
         if gate_hits and self.player.is_have_key:
-            arcade.play_sound(DOR_SOUND,5,0,0,10)
-            self.gate.remove_from_sprite_lists()
+            if DOR_SOUND:
+                play_sound(DOR_SOUND)
+            for g in gate_hits:
+                g.remove_from_sprite_lists()
         elif gate_hits and self.player.is_have_key is False:
-            self.player.center_x = mat_x * TILE_SIZE + TILE_SIZE / 2
-            self.player.center_y = mat_y * TILE_SIZE + TILE_SIZE / 2
-
+            mat_x = int((self.player.center_x - self.offset_x) // TILE_SIZE)
+            mat_y = int((self.player.center_y - self.offset_y) // TILE_SIZE)
+            self.player.center_x = mat_x * TILE_SIZE + TILE_SIZE / 2 + self.offset_x
+            self.player.center_y = mat_y * TILE_SIZE + TILE_SIZE / 2 + self.offset_y
+            self.player.change_x = 0
+            self.player.change_y = 0
 
 # ------------------ MAIN ------------------
 def main():
     window = arcade.Window(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
-    window.show_view(SplashScreen())
-    arcade.play_sound(LOGO_SOUND,20)
+    start = SplashScreen()
+    window.show_view(start)
+    if LOGO_SOUND:
+        play_sound(LOGO_SOUND)
     arcade.run()
 
 if __name__ == "__main__":
     main()
-
-#end
