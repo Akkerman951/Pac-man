@@ -835,7 +835,7 @@ class PacmanGame(arcade.View):
         if apples_hit:
             self.power_mode = True
             self.power_timer = 10 * 60
-            arcade.play_sound(APPLE_SOUND, 10)
+            arcade.play_sound(APPLE_SOUND, 10,0,0,10)
 
         if self.power_mode:
             self.power_timer -= 1
