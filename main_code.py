@@ -33,6 +33,8 @@ GHOST_SOUND = load_sound(config.get("ghost_sound1", ""))
 WIN_SOUND = load_sound(config.get("win_sound1", ""))
 EAT_GHOST_SOUND = load_sound(config.get("eat_ghost_sound1", ""))
 PILL_SOUND = load_sound(config.get("pill_sound1", ""))
+DEAF_SOUND = load_sound(config.get("def_sound1"))
+LOGO_SOUND = load_sound(config.get("logo_sound1"))
 
 RED_GHOST_PNG_R = load_texture(config.get("red_ghost_png1.r", ""))
 RED_GHOST_PNG_L = load_texture(config.get("red_ghost_png1.l", ""))
@@ -43,14 +45,15 @@ RED_GHOST_PNG_L2 = load_texture(config.get("red_ghost_png2.l", ""))
 RED_GHOST_PNG_U2 = load_texture(config.get("red_ghost_png2.u", ""))
 RED_GHOST_PNG_D2 = load_texture(config.get("red_ghost_png2.d", ""))
 
-PORTAL_PNG1 = load_texture(config.get("portal_png1", ""))
-APPLE_PNG = load_texture(config.get("apple_png1", ""))
+PORTAL_PNG1 = load_texture(config.get("portal_png1"))
+APPLE_PNG = load_texture(config.get("apple_png1"))
 PILL_PNG =  load_texture(config.get("pill_blue_png1", ""))
 SPLASH_PNG = load_texture("texture/starting_screen1.jpg.jpeg")
 PACMEN_UP_PNG = load_texture(config.get("pacmen_u_png1", ""))
 PACMEN_DOWN_PNG = load_texture(config.get("pacmen_d_png1", ""))
 PACMEN_RAIGHT_PNG = load_texture(config.get("pacmen_r_png1", ""))
 PACMEN_LEFT_PNG = load_texture(config.get("pacmen_l_png1", ""))
+KEY_PNG = load_texture(config.get("key_png1", ""))
 
 # сгруппированные фреймы призрака (по направлению)
 RED_GHOST_FRAMES_R = [RED_GHOST_PNG_R, RED_GHOST_PNG_R2]
@@ -80,7 +83,7 @@ class SplashScreen(arcade.View):
         super().__init__()
         self.timer = 0
         self.alpha = -100
-        self.fade_speed = 0.5
+        self.fade_speed = 0.7
         self.max_time = 12 * 60
 
         self.background_sprite = arcade.Sprite()
@@ -205,7 +208,7 @@ class Pill(arcade.Sprite):
 
 class Key(arcade.Sprite):
     def __init__(self):
-        texture = arcade.make_circle_texture(16, arcade.color.RED)
+        texture = KEY_PNG
         super().__init__(texture)
         self.width = TILE_SIZE
         self.height = TILE_SIZE
@@ -388,10 +391,10 @@ class PacmanGame(arcade.View):
         self.coin_list.draw()
         self.apple_list.draw()
         self.teleport_list.draw()
+        self.key_list.draw()
+        self.pill_list.draw()
         self.ghost_list.draw()
         self.player_list.draw()
-        self.pill_list.draw()
-        self.key_list.draw()
         self.gate_list.draw()
         arcade.draw_text(f"Score: {self.player.score}", 10, WINDOW_HEIGHT - 45, arcade.color.WHITE, 16)
         arcade.draw_text(f"Lives: {self.lives}", 10, WINDOW_HEIGHT - 65, arcade.color.WHITE, 16)
@@ -555,6 +558,7 @@ class PacmanGame(arcade.View):
                 self.lives -= 1
                 arcade.play_sound(GHOST_SOUND, 20)
                 if self.lives <= 0:
+                    arcade.play_sound(DEAF_SOUND, 5)
                     self.game_over = True
                 else:
                     self.player.center_x = self.start_x
@@ -686,10 +690,6 @@ class PacmanGame(arcade.View):
             else:
                 # все уровни пройдены
                 self.win = True
-
-        if self.game_over:
-            #put sound of lose here!!!
-            pass
         if self.exit:
             #put sound of pause here!!!
             pass
@@ -711,7 +711,7 @@ class PacmanGame(arcade.View):
 def main():
     window = arcade.Window(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
     window.show_view(SplashScreen())
-    #put sound of starting screen here!!!
+    arcade.play_sound(LOGO_SOUND,20)
     arcade.run()
 
 if __name__ == "__main__":
