@@ -85,6 +85,7 @@ LEADERBOARD_SCROLL_ACCEL = 600.0
 LEADERBOARD_SCROLL_MAX = 800.0
 LEADERBOARD_VISIBLE_ROWS = 10
 NAME_MAX_LEN = 18
+GHOST_ANIM_INTERVAL = 0.12
 
 
 def load_levels(folder="levels"):
@@ -202,6 +203,9 @@ class Ghost(arcade.Sprite):
         self.height = TILE_SIZE
         self.change_x = random.choice([-1, 1]) * 4
         self.change_y = 0
+        self.anim_timer = 0.0
+        self.anim_frame = 0
+        self.last_dir = "R"
 
     def update(self, delta_time: float = 1 / 60, *args, **kwargs):
         self.move()
@@ -209,6 +213,33 @@ class Ghost(arcade.Sprite):
     def move(self):
         self.center_x += self.change_x
         self.center_y += self.change_y
+
+    def advance_animation(self, delta_time: float):
+        if self.change_x > 0:
+            self.last_dir = "R"
+        elif self.change_x < 0:
+            self.last_dir = "L"
+        elif self.change_y > 0:
+            self.last_dir = "U"
+        elif self.change_y < 0:
+            self.last_dir = "D"
+
+        if self.change_x == 0 and self.change_y == 0:
+            return
+
+        self.anim_timer += delta_time
+        if self.anim_timer >= GHOST_ANIM_INTERVAL:
+            self.anim_timer -= GHOST_ANIM_INTERVAL
+            self.anim_frame = (self.anim_frame + 1) % 2
+
+    def get_red_frames(self):
+        if self.last_dir == "R":
+            return RED_GHOST_FRAMES_R
+        if self.last_dir == "L":
+            return RED_GHOST_FRAMES_L
+        if self.last_dir == "U":
+            return RED_GHOST_FRAMES_U
+        return RED_GHOST_FRAMES_D
 
 class Coin(arcade.Sprite):
     def __init__(self):
@@ -736,35 +767,21 @@ class PacmanGame(arcade.View):
         for ghost in self.ghost_list:
             matr_x = ghost.center_x // TILE_SIZE
             matr_y = ghost.center_y // TILE_SIZE
-            if self.power_mode and not (ghost.texture in [BLUE_PNG,GREY_PNG]):
-                ghost.texture = BLUE_PNG
-            elif not self.power_mode and (ghost.texture in [BLUE_PNG,GREY_PNG]):
-                if ghost.change_x == 2 and ghost.change_y == 0:
-                    ghost.texture = RED_GHOST_PNG_R
-                if ghost.change_x == -2 and ghost.change_y == 0:
-                    ghost.texture = RED_GHOST_PNG_L
-                if ghost.change_x == 0 and ghost.change_y == 2:
-                    ghost.texture = RED_GHOST_PNG_U
-                if ghost.change_x == 0 and ghost.change_y == -2:
-                    ghost.texture = RED_GHOST_PNG_D
 
-
-            ghost.update()
+            ghost.update(delta_time)
             if arcade.check_for_collision_with_list(ghost, self.wall_list):
                 ghost.change_x, ghost.change_y = random.choice([(2,0),(-2,0),(0,2),(0,-2)])
-                if self.power_mode:
-                    ghost.texture = random.choice([BLUE_PNG,GREY_PNG])
-                else:
-                    if ghost.change_x == 2 and ghost.change_y == 0:
-                            ghost.texture = RED_GHOST_PNG_R
-                    if ghost.change_x == -2 and ghost.change_y == 0:
-                            ghost.texture = RED_GHOST_PNG_L
-                    if ghost.change_x == 0 and ghost.change_y == 2:
-                            ghost.texture = RED_GHOST_PNG_U
-                    if ghost.change_x == 0 and ghost.change_y == -2:
-                            ghost.texture = RED_GHOST_PNG_D
                 ghost.center_x = matr_x * TILE_SIZE + 16
                 ghost.center_y = matr_y * TILE_SIZE + 16
+
+            ghost.advance_animation(delta_time)
+            if self.power_mode:
+                if self.power_timer <= 2 * 60:
+                    ghost.texture = BLUE_PNG if ghost.anim_frame == 0 else GREY_PNG
+                else:
+                    ghost.texture = BLUE_PNG
+            else:
+                ghost.texture = ghost.get_red_frames()[ghost.anim_frame]
 
         # ------------------ Coins ------------------
         coins_hit = arcade.check_for_collision_with_list(self.player, self.coin_list)
