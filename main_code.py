@@ -853,8 +853,6 @@ class PacmanGame(arcade.View):
         # Надёжная проверка завершения уровня:
         # считаем уровень пройденным, когда не осталось обычных монет и яблок на поле.
         if len(self.coin_list) == 0 and len(self.apple_list) == 0:
-            arcade.play_sound(WIN_SOUND, 20)
-
             # увеличиваем номер уровня и загружаем следующий (если он есть)
             self.current_level += 1
             if self.current_level < len(self.levels):
@@ -863,6 +861,7 @@ class PacmanGame(arcade.View):
                 self.setup()
             else:
                 # все уровни пройдены
+                arcade.play_sound(WIN_SOUND, 20)
                 self.win = True
                 if not self.name_saved:
                     self.name_entry_active = True
