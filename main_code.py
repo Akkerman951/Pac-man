@@ -1,3 +1,4 @@
+import json
 import random
 import arcade
 from arcade import check_for_collision_with_list, load_sound, load_texture, play_sound
@@ -67,6 +68,21 @@ RED_GHOST_FRAMES_L = [RED_GHOST_PNG_L, RED_GHOST_PNG_L2]
 RED_GHOST_FRAMES_U = [RED_GHOST_PNG_U, RED_GHOST_PNG_U2]
 RED_GHOST_FRAMES_D = [RED_GHOST_PNG_D, RED_GHOST_PNG_D2]
 
+LEADERBOARD_PANEL_LEFT = 5
+LEADERBOARD_PANEL_WIDTH = 255
+LEADERBOARD_PANEL_BOTTOM = 10
+LEADERBOARD_PANEL_TOP_MARGIN = 5
+LEADERBOARD_PADDING = 16
+LEADERBOARD_TITLE_SIZE = 20
+LEADERBOARD_TEXT_SIZE = 18
+LEADERBOARD_LINE_HEIGHT = 18
+LEADERBOARD_ROW_GAP = 2
+LEADERBOARD_SCROLL_STEP = 20
+LEADERBOARD_SCROLL_SPEED = 140.0
+LEADERBOARD_SCROLL_ACCEL = 600.0
+LEADERBOARD_SCROLL_MAX = 800.0
+LEADERBOARD_VISIBLE_ROWS = 10
+NAME_MAX_LEN = 18
 
 
 def load_levels(folder="levels"):
@@ -81,6 +97,25 @@ def load_levels(folder="levels"):
             levels.append(level)
     return levels
 
+def load_scores(path):
+    try:
+        with open(path, "r") as file:
+            data = json.load(file)
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(data, list):
+        return []
+    scores = []
+    for item in data:
+        if isinstance(item, dict) and "name" in item and "time" in item:
+            scores.append({"name": str(item["name"]), "time": float(item["time"])})
+    return scores
+
+def save_scores(path, scores):
+    with open(path, "w") as file:
+        json.dump(scores, file, ensure_ascii=True, indent=2)
 
 
 # ------------------ START SCREEN ------------------
@@ -255,6 +290,13 @@ class PacmanGame(arcade.View):
         self.exit = False
         self.paused_velocity = (0, 0)
         self.show_credits = False
+        self.scores = []
+        self.scores_scroll = 0
+        self.scroll_dir = 0
+        self.scroll_speed = 0.0
+        self.name_input = ""
+        self.name_entry_active = False
+        self.name_saved = False
 
         self.start_x = 0
         self.start_y = 0
@@ -282,6 +324,13 @@ class PacmanGame(arcade.View):
         self.speed_up = False
         self.speed_up_timer = 0
         self.white_coin_timer = 5 * 60
+        self.scores = []
+        self.scores_scroll = 0
+        self.scroll_dir = 0
+        self.scroll_speed = 0.0
+        self.name_input = ""
+        self.name_entry_active = False
+        self.name_saved = False
 
         level = self.levels[self.current_level]  # <-- новая строка
         rows = len(level)
@@ -390,6 +439,34 @@ class PacmanGame(arcade.View):
             coin.center_y = y
             self.white_coin_list.append(coin)
 
+    def add_score(self, name, time_spent):
+        self.scores.append({"name": name, "time": time_spent})
+        self.scores.sort(key=lambda item: item["time"])
+        self.scores = self.scores[:100]
+        save_scores(SCORES_PATH, self.scores)
+
+    def get_scores_scroll_max(self):
+        panel_top = WINDOW_HEIGHT - LEADERBOARD_PANEL_TOP_MARGIN
+        list_height = LEADERBOARD_VISIBLE_ROWS * LEADERBOARD_LINE_HEIGHT
+        list_top = panel_top - LEADERBOARD_PADDING - LEADERBOARD_TITLE_SIZE - 6
+        list_bottom = list_top - list_height
+        visible_height = list_top - list_bottom
+        row_step = LEADERBOARD_LINE_HEIGHT + LEADERBOARD_ROW_GAP
+        return max(0, len(self.scores) * row_step - visible_height)
+
+    def update_scores_scroll(self, delta_time):
+        if not (self.game_over or self.win or self.exit):
+            return
+        if self.name_entry_active:
+            return
+        if self.scroll_dir == 0:
+            self.scroll_speed = 0.0
+            return
+        self.scroll_speed = min(LEADERBOARD_SCROLL_MAX, self.scroll_speed + LEADERBOARD_SCROLL_ACCEL * delta_time)
+        delta = self.scroll_dir * self.scroll_speed * delta_time
+        max_scroll = self.get_scores_scroll_max()
+        self.scores_scroll = max(0, min(self.scores_scroll + delta, max_scroll))
+
     def on_draw(self):
         self.clear()
         self.wall_list.draw()
@@ -402,32 +479,65 @@ class PacmanGame(arcade.View):
         self.ghost_list.draw()
         self.player_list.draw()
         self.gate_list.draw()
-        arcade.draw_text(f"Score: {self.player.score}", 10, WINDOW_HEIGHT - 45, arcade.color.WHITE, 16)
-        arcade.draw_text(f"Lives: {self.lives}", 10, WINDOW_HEIGHT - 65, arcade.color.WHITE, 16)
-        arcade.draw_text(f"Time: {round(self.counter)} s", 10, WINDOW_HEIGHT - 25 , arcade.color.WHITE, 16)
-#
-        def draw_text_block(text_items, pad=12,border=6,
+        show_leaderboard = self.game_over or self.win or self.exit
+        stats_x = 10
+        if show_leaderboard:
+            panel_left = LEADERBOARD_PANEL_LEFT
+            panel_right = LEADERBOARD_PANEL_LEFT + LEADERBOARD_PANEL_WIDTH
+            panel_top = WINDOW_HEIGHT - LEADERBOARD_PANEL_TOP_MARGIN
+            list_height = LEADERBOARD_VISIBLE_ROWS * LEADERBOARD_LINE_HEIGHT
+            panel_bottom = panel_top - (LEADERBOARD_PADDING * 2 + LEADERBOARD_TITLE_SIZE + 6 + list_height)
+            list_top = panel_top - LEADERBOARD_PADDING - LEADERBOARD_TITLE_SIZE + 6
+            list_bottom = list_top - list_height
+            visible_height = list_top - list_bottom
+            row_step = LEADERBOARD_LINE_HEIGHT + LEADERBOARD_ROW_GAP
+            max_scroll = max(0,len(self.scores) * row_step - visible_height)
+            self.scores_scroll = max(0,min(self.scores_scroll,max_scroll))
+
+            arcade.draw_lrbt_rectangle_filled(panel_left,panel_right,panel_bottom,panel_top,arcade.color.DARK_VIOLET)
+            arcade.draw_text("TOP:",panel_left + LEADERBOARD_PADDING - 15,
+                             panel_top - LEADERBOARD_PADDING - LEADERBOARD_TITLE_SIZE + 15,
+                             arcade.color.BONE,LEADERBOARD_TITLE_SIZE)
+
+            y = list_top - LEADERBOARD_LINE_HEIGHT + self.scores_scroll
+            for idx,item in enumerate(self.scores,start=1):
+                if y < list_bottom - LEADERBOARD_LINE_HEIGHT or y > list_top + LEADERBOARD_LINE_HEIGHT:
+                    y -= row_step
+                    continue
+                name = item["name"]
+                time_str = f"{item['time']:.1f}s"
+                arcade.draw_text(f"{idx}. {name} - {time_str}",panel_left + LEADERBOARD_PADDING,y,
+                                 arcade.color.AQUAMARINE,LEADERBOARD_TEXT_SIZE)
+                y -= row_step
+
+            stats_x = panel_right + 10
+
+        arcade.draw_text(f"Score: {self.player.score}",stats_x,WINDOW_HEIGHT - 45,arcade.color.WHITE,16)
+        arcade.draw_text(f"Lives: {self.lives}",stats_x,WINDOW_HEIGHT - 65,arcade.color.WHITE,16)
+        arcade.draw_text(f"Time: {round(self.counter)} s",stats_x,WINDOW_HEIGHT - 25,arcade.color.WHITE,16)
+
+        def draw_text_block(text_items,pad=12,border=6,
                             inner_color=arcade.color.INDIGO,
                             outer_color=arcade.color.IMPERIAL_PURPLE):
-            text_objs = [arcade.Text(t, x, y, c, s) for t, x, y, c, s in text_items]
+            text_objs = [arcade.Text(t,x,y,c,s) for t,x,y,c,s in text_items]
             left = float("inf")
             right = float("-inf")
             bottom = float("inf")
             top = float("-inf")
             for obj in text_objs:
-                left = min(left, obj.x)
-                right = max(right, obj.x + obj.content_width)
-                bottom = min(bottom, obj.y)
-                top = max(top, obj.y + obj.content_height)
+                left = min(left,obj.x)
+                right = max(right,obj.x + obj.content_width)
+                bottom = min(bottom,obj.y)
+                top = max(top,obj.y + obj.content_height)
             arcade.draw_lrbt_rectangle_filled(
-                left - (pad + border) - 5,
+                left - (pad + border) - 30,
                 right + (pad + border) + 5,
                 bottom - (pad + border) - 15,
                 top + (pad + border) - 6,
                 outer_color,
             )
             arcade.draw_lrbt_rectangle_filled(
-                left - pad,
+                left - pad - 25,
                 right + pad,
                 bottom - pad - 10,
                 top + pad - 12,
@@ -437,25 +547,34 @@ class PacmanGame(arcade.View):
                 obj.draw()
 
         if self.game_over:
-            arcade.draw_text("To see credits press: C",WINDOW_WIDTH - 240, WINDOW_HEIGHT - 25, arcade.color.CHERRY, 20)
+            arcade.draw_text("To see credits press: C",WINDOW_WIDTH - 240,WINDOW_HEIGHT - 25,arcade.color.CHERRY,20)
             draw_text_block([
-                ("GAME OVER!", WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2, arcade.color.RED, 32),
-                (f"TIME YOU SPENT: {round(self.counter)} s", WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 40, arcade.color.PINK, 32),
+                ("GAME OVER!",WINDOW_WIDTH / 2 - 100,WINDOW_HEIGHT / 2,arcade.color.RED,32),
+                (f"TIME YOU SPENT: {round(self.counter)} s",WINDOW_WIDTH / 2 - 150,WINDOW_HEIGHT / 2 - 40,arcade.color.PINK,
+                 32),
             ])
         elif self.win:
-            arcade.draw_text("To see credits press: C",WINDOW_WIDTH - 240, WINDOW_HEIGHT - 25, arcade.color.CHERRY, 20)
+            arcade.draw_text("To see credits press: C",WINDOW_WIDTH - 240,WINDOW_HEIGHT - 25,arcade.color.CHERRY,20)
             draw_text_block([
-                ("YOU WIN!", WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2, arcade.color.PINK, 32),
-                (f"TIME YOU SPENT: {round(self.counter)} s", WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 40, arcade.color.PINK, 32),
-                (f"LIFES YOU SPENT: {abs(self.lives - 3)}", WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 80, arcade.color.PINK, 32),
+                ("YOU WON!",WINDOW_WIDTH / 2 - 100,WINDOW_HEIGHT / 2,arcade.color.PINK,32),
+                (f"TIME YOU SPENT: {round(self.counter)} s",WINDOW_WIDTH / 2 - 150,WINDOW_HEIGHT / 2 - 40,arcade.color.PINK,
+                 32),
+                (f"LIFES YOU SPENT: {abs(self.lives - 3)}",WINDOW_WIDTH / 2 - 150,WINDOW_HEIGHT / 2 - 80,arcade.color.PINK,
+                 32),
             ])
         elif self.exit:
-            arcade.draw_text("To see credits press: C",WINDOW_WIDTH - 240, WINDOW_HEIGHT - 25, arcade.color.CHERRY, 20)
+            arcade.draw_text("To see credits press: C",WINDOW_WIDTH - 240,WINDOW_HEIGHT - 25,arcade.color.CHERRY,20)
             draw_text_block([
-                ("Are you sure you want to quit?", WINDOW_WIDTH / 2 - 250, WINDOW_HEIGHT / 2 - 10, arcade.color.PINK, 32),
-                ("To continue press: SPACE", WINDOW_WIDTH / 2 - 200, WINDOW_HEIGHT / 2 - 50, arcade.color.GREEN, 32),
-                ("To quit press: ESC", WINDOW_WIDTH / 2 - 140, WINDOW_HEIGHT / 2 - 90, arcade.color.RED, 32),
+                ("Are you sure you want to quit?",WINDOW_WIDTH / 2 - 250,WINDOW_HEIGHT / 2 - 10,arcade.color.PINK,32),
+                ("To continue press: SPACE",WINDOW_WIDTH / 2 - 200,WINDOW_HEIGHT / 2 - 50,arcade.color.GREEN,32),
+                ("To quit press: ESC",WINDOW_WIDTH / 2 - 140,WINDOW_HEIGHT / 2 - 90,arcade.color.RED,32),
             ])
+
+        if self.win and self.name_entry_active:
+            prompt = "ENTER YOUR NAME:"
+            input_text = f"{self.name_input}_"
+            arcade.draw_text(prompt,WINDOW_WIDTH / 2 - 60,WINDOW_HEIGHT / 2 + 220,arcade.color.RED,24)
+            arcade.draw_text(input_text,WINDOW_WIDTH / 2 - 60,WINDOW_HEIGHT / 2 + 185,arcade.color.AQUAMARINE,24)
 
         if self.show_credits and (self.game_over or self.win or self.exit):
             credits = [
@@ -467,7 +586,7 @@ class PacmanGame(arcade.View):
                 "Team:",
                 "SASHA PERCHIK",
                 "MARK DONOV",
-                "VSEVOLOD BOGOMOLOV",
+                "SEVVA BOGOMOLOV",
                 "KIM POLYATSKYI",
                 "ANITA KNUAZEVA",
             ]
@@ -475,17 +594,36 @@ class PacmanGame(arcade.View):
             line_gap = 8
             total_height = len(credits) * (size + line_gap) - line_gap
             start_y = WINDOW_HEIGHT / 2 + total_height / 2
-            max_width = max(arcade.Text(t, 0, 0, arcade.color.BROWN, size).content_width for t in credits)
-            arcade.draw_lrbt_rectangle_filled(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, arcade.color.COOL_BLACK)
+            max_width = max(arcade.Text(t,0,0,arcade.color.BROWN,size).content_width for t in credits)
+            arcade.draw_lrbt_rectangle_filled(0,WINDOW_WIDTH,0,WINDOW_HEIGHT,arcade.color.COOL_BLACK)
             y = start_y - size
             for text in credits:
-                arcade.draw_text(text, WINDOW_WIDTH / 2 - max_width / 2, y, arcade.color.BROWN, size)
+                arcade.draw_text(text,WINDOW_WIDTH / 2 - max_width / 2,y,arcade.color.BROWN,size)
                 y -= size + line_gap
 
     def on_key_press(self, key: int, modifiers):
+        if self.name_entry_active:
+            if key == arcade.key.BACKSPACE:
+                self.name_input = self.name_input[:-1]
+            elif key == arcade.key.ENTER:
+                name = self.name_input.strip()
+                if name:
+                    self.add_score(name,round(self.counter,1))
+                self.name_saved = True
+                self.name_entry_active = False
+            return
+
         if (self.game_over or self.win or self.exit) and key == arcade.key.C:
-            arcade.play_sound(PLAY_SOUND,2)
             self.show_credits = not self.show_credits
+            arcade.play_sound(PLAY_SOUND,2)
+            return
+        if (self.game_over or self.win or self.exit) and key in (arcade.key.W,arcade.key.UP):
+            self.scroll_dir = -1
+            self.scroll_speed = max(self.scroll_speed,LEADERBOARD_SCROLL_SPEED)
+            return
+        if (self.game_over or self.win or self.exit) and key in (arcade.key.S,arcade.key.DOWN):
+            self.scroll_dir = 1
+            self.scroll_speed = max(self.scroll_speed,LEADERBOARD_SCROLL_SPEED)
             return
         if self.exit:
             if key == arcade.key.ESCAPE:
@@ -494,8 +632,9 @@ class PacmanGame(arcade.View):
                 arcade.play_sound(PLAY_SOUND,5)
                 self.exit = False
                 if self.player:
-                    self.player.change_x, self.player.change_y = self.paused_velocity
+                    self.player.change_x,self.player.change_y = self.paused_velocity
             return
+
         if key in (arcade.key.UP, arcade.key.W):
             self.player.texture = PACMEN_UP_PNG
             self.player.height = TILE_SIZE
@@ -529,10 +668,27 @@ class PacmanGame(arcade.View):
                 self.paused_velocity = (self.player.change_x, self.player.change_y)
                 self.player.stop()
 
-    def on_update(self, delta_time):
-        if self.game_over or self.win:
+    def on_key_release(self, key: int, modifiers):
+        if (self.game_over or self.win or self.exit) and key in (arcade.key.W, arcade.key.UP, arcade.key.S, arcade.key.DOWN):
+            self.scroll_dir = 0
+            self.scroll_speed = 0.0
+
+    def on_text(self, text):
+        if self.name_entry_active and len(self.name_input) < NAME_MAX_LEN:
+            self.name_input += text
+
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        if not (self.game_over or self.win or self.exit):
             return
-        if self.exit:
+        if self.name_entry_active:
+            return
+        if scroll_y != 0:
+            max_scroll = self.get_scores_scroll_max()
+            self.scores_scroll = max(0, min(self.scores_scroll - scroll_y * LEADERBOARD_SCROLL_STEP, max_scroll))
+
+    def on_update(self, delta_time):
+        if self.game_over or self.win or self.exit:
+            self.update_scores_scroll(delta_time)
             return
         if self.player and self.player.teleport_cooldown > 0:
             self.player.teleport_cooldown -= 1
@@ -562,7 +718,7 @@ class PacmanGame(arcade.View):
                 for ghost in ghosts_hit:
                     ghost.remove_from_sprite_lists()
                     arcade.play_sound(EAT_GHOST_SOUND, 10)
-                    self.player.score += 1000
+                    self.player.score += 250
             else:
                 self.lives -= 1
                 arcade.play_sound(GHOST_SOUND, 20)
