@@ -1,38 +1,16 @@
-# Исправленный pacman (минимальные изменения, чтобы всё работало)
-import random
-import os
 import json
+import random
 import arcade
 from arcade import check_for_collision_with_list, load_sound, load_texture, play_sound
-
+import os
 # ------------------ HELPERS ------------------
-def safe_load_sound(path):
-    if not path:
-        return None
-    try:
-        return load_sound(path)
-    except Exception:
-        return None
-
-def safe_load_texture(path):
-    if not path:
-        return None
-    try:
-        return load_texture(path)
-    except Exception:
-        return None
-
 def load_config(filename):
     config = {}
-    if not os.path.isfile(filename):
-        return config
-    with open(filename, "r", encoding="utf-8") as file:
+    with open(filename, "r") as file:
         for line in file:
             if not line.strip() or line.strip().startswith("#"):
                 continue
-            if "=" not in line:
-                continue
-            key, value = line.strip().split("=", 1)
+            key, value = line.strip().split("=")
             key = key.strip()
             value = value.strip()
             if value.isdigit():
@@ -124,7 +102,7 @@ def load_levels(folder="levels"):
 
 def load_scores(path):
     try:
-        with open(path, "r", encoding="utf-8") as file:
+        with open(path, "r") as file:
             data = json.load(file)
     except FileNotFoundError:
         return []
@@ -135,21 +113,12 @@ def load_scores(path):
     scores = []
     for item in data:
         if isinstance(item, dict) and "name" in item and "time" in item:
-            try:
-                scores.append({"name": str(item["name"]), "time": float(item["time"])})
-            except Exception:
-                pass
+            scores.append({"name": str(item["name"]), "time": float(item["time"])})
     return scores
 
 def save_scores(path, scores):
-    try:
-        with open(path, "w", encoding="utf-8") as file:
-            json.dump(scores, file, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
-
-# ------------------ CONFIG ------------------
-config = load_config("config.txt")
+    with open(path, "w") as file:
+        json.dump(scores, file, ensure_ascii=True, indent=2)
 
 
 # ------------------ START SCREEN ------------------
@@ -361,7 +330,7 @@ class PacmanGame(arcade.View):
         self.name_input = ""
         self.name_entry_active = False
         self.name_saved = False
-        self.vhs_player = None
+
         self.start_x = 0
         self.start_y = 0
         self.score = 0
@@ -394,7 +363,6 @@ class PacmanGame(arcade.View):
         self.name_input = ""
         self.name_entry_active = False
         self.name_saved = False
-        self.stop_vhs()
 
         level = self.levels[self.current_level]  # <-- новая строка
         rows = len(level)
@@ -648,9 +616,9 @@ class PacmanGame(arcade.View):
                 " ",
                 " ",
                 "Team:",
-                "ALEXANDER PERCHIK",
+                "SASHA PERCHIK",
                 "MARK DONOV",
-                "VSEVOLOD BOGOMOLOV",
+                "SEVVA BOGOMOLOV",
                 "KIM POLYATSKYI",
                 "ANITA KNUAZEVA",
             ]
@@ -680,10 +648,6 @@ class PacmanGame(arcade.View):
         if (self.game_over or self.win or self.exit) and key == arcade.key.C:
             self.show_credits = not self.show_credits
             arcade.play_sound(PLAY_SOUND,2)
-            if self.show_credits:
-                self.start_vhs()
-            else:
-                self.stop_vhs()
             return
         if (self.game_over or self.win or self.exit) and key in (arcade.key.W,arcade.key.UP):
             self.scroll_dir = -1
@@ -699,9 +663,6 @@ class PacmanGame(arcade.View):
             elif key == arcade.key.SPACE:
                 arcade.play_sound(PLAY_SOUND,5)
                 self.exit = False
-                if self.show_credits:
-                    self.show_credits = False
-                    self.stop_vhs()
                 if self.player:
                     self.player.change_x,self.player.change_y = self.paused_velocity
             return
@@ -874,7 +835,7 @@ class PacmanGame(arcade.View):
         if apples_hit:
             self.power_mode = True
             self.power_timer = 10 * 60
-            arcade.play_sound(APPLE_SOUND, 10)
+            arcade.play_sound(APPLE_SOUND, 10,0,0,10)
 
         if self.power_mode:
             self.power_timer -= 1
@@ -897,7 +858,7 @@ class PacmanGame(arcade.View):
                 dest = random.choice(other_portals)
                 self.player.center_x = dest.center_x
                 self.player.center_y = dest.center_y
-                arcade.play_sound(PORTAL_SOUND)
+                arcade.play_sound(PORTAL_SOUND,5,0,0,10)
                 self.player.teleport_cooldown = 5 * 60
 
         # ------------------ Walls ------------------
@@ -931,7 +892,7 @@ class PacmanGame(arcade.View):
         # -----------------Keys and Gates -------------------
         key_hits = arcade.check_for_collision_with_list(self.player, self.key_list)
         if key_hits:
-            arcade.play_sound(PILL_SOUND,5)
+            arcade.play_sound(PILL_SOUND,5,0,0,10)
             self.key.remove_from_sprite_lists()
             self.player.is_have_key = True
         gate_hits = arcade.check_for_collision_with_list(self.player, self.gate_list)
@@ -941,7 +902,6 @@ class PacmanGame(arcade.View):
         elif gate_hits and self.player.is_have_key is False:
             self.player.center_x = mat_x * TILE_SIZE + TILE_SIZE / 2
             self.player.center_y = mat_y * TILE_SIZE + TILE_SIZE / 2
-
 
 # ------------------ MAIN ------------------
 def main():

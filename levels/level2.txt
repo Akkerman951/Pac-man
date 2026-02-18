@@ -1,9 +1,9 @@
-WWWWWWWWWWWWWWW
-W.P....A......W
-W.WWWW.WWWWWW.W
-W.E....G....D.W
-W.W.WWWWWW.W.W
-W...W....K....W
-W.WWWWW.WWWWW.W
-W.......G.....W
-WWWWWWWWWWWWWWW
+     WWWWWWWWWWWWWWW
+     W.P....A....K.W
+     W.WWWW.W.WWWW.W
+     W......G....D.W
+     WWWWWWWWWW....W
+     W...W....E....W
+     W.WWWWW.WWWWWWW
+     W.......G.....W
+     WWWWWWWWWWWWWWW
