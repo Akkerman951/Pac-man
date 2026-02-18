@@ -41,6 +41,7 @@ POWER_END_SOUND = load_sound(config.get("power_end_sound1"))
 PLAY_SOUND = load_sound(config.get("play_sound1"))
 PAUSE_SOUND = load_sound(config.get("pause_sound1"))
 DOR_SOUND = load_sound(config.get("dor_sound1"))
+VHS_NOISE = load_sound(config.get("vhs-noise1"))
 
 RED_GHOST_PNG_R = load_texture(config.get("red_ghost_png1.r", ""))
 RED_GHOST_PNG_L = load_texture(config.get("red_ghost_png1.l", ""))
@@ -330,6 +331,7 @@ class PacmanGame(arcade.View):
         self.name_input = ""
         self.name_entry_active = False
         self.name_saved = False
+        self.vhs_player = None
 
         self.start_x = 0
         self.start_y = 0
@@ -363,6 +365,7 @@ class PacmanGame(arcade.View):
         self.name_input = ""
         self.name_entry_active = False
         self.name_saved = False
+        self.stop_vhs()
 
         level = self.levels[self.current_level]  # <-- новая строка
         rows = len(level)
@@ -432,6 +435,16 @@ class PacmanGame(arcade.View):
                     self.pill_list.append(pill)
 
         self.max_score = len(self.coin_list) * 300 + len(self.apple_list) * 500 + 4 * 1000
+
+    def start_vhs(self):
+        if self.vhs_player:
+            arcade.stop_sound(self.vhs_player)
+        self.vhs_player = arcade.play_sound(VHS_NOISE, 2)
+
+    def stop_vhs(self):
+        if self.vhs_player:
+            arcade.stop_sound(self.vhs_player)
+            self.vhs_player = None
 
     def spawn_white_coin(self):
         if len(self.white_coin_list) > 0:
@@ -616,11 +629,11 @@ class PacmanGame(arcade.View):
                 " ",
                 " ",
                 "Team:",
-                "SASHA PERCHIK",
+                "ALEXANDER PERCHIK",
                 "MARK DONOV",
-                "SEVVA BOGOMOLOV",
+                "VSEVOLOD BOGOMOLOV",
                 "KIM POLYATSKYI",
-                "ANITA KNUAZEVA",
+                "ANITA KNYAZEVA",
             ]
             size = 45
             line_gap = 8
@@ -648,6 +661,10 @@ class PacmanGame(arcade.View):
         if (self.game_over or self.win or self.exit) and key == arcade.key.C:
             self.show_credits = not self.show_credits
             arcade.play_sound(PLAY_SOUND,2)
+            if self.show_credits:
+                self.start_vhs()
+            else:
+                self.stop_vhs()
             return
         if (self.game_over or self.win or self.exit) and key in (arcade.key.W,arcade.key.UP):
             self.scroll_dir = -1
